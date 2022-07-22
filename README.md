@@ -1,8 +1,8 @@
 # Discord Dice Bot
 
-If you're here to read code, I must appologize in advance. This project is the jet lagged fever dream of someone only semi-familiar with Javascript more or less making it up as they go. Read at your peril.
+If you're here to read code, I must apologize in advance. This project is the jet lagged fever dream of someone only semi-familiar with Javascript more or less making it up as they go. Read at your peril.
 
-If, however, you're just looking for a Discord bot that can roll some dice. Welcome! Dice Bot here is a chat bot that adds slash commands to your server that more or less mimic Roll20's dice rolling syntax. It runs on [Node.js](https://nodejs.org) using [Discord.js](https://discord.js.org). Hosting is expensive so you can't just link the bot to your server, but with some modest technical knowledge isn't too hard to run on a computer you own or on the free tier of a service like Heroku. It's pretty fully featured so you can `/r input:(3+{2d6!<2-1,5d8r3r5>3,1d6^3}dl2)*2d6` if you can find a reson to.
+If, however, you're just looking for a Discord bot that can roll some dice. Welcome! Dice Bot here is a chat bot that adds slash commands to your server that more or less mimic Roll20's dice rolling syntax. It runs on [Node.js](https://nodejs.org) using [Discord.js](https://discord.js.org). Hosting is expensive so you can't just link the bot to your server, but with some modest technical knowledge it isn't too hard to run on a computer you own or on the free tier of a service like Heroku. It's pretty fully featured so you can `/r input:(3+{2d6!<2-1,5d8r3r5>3,1d6^3}dl2)*2d6` if you can find a use for it.
 
 ![/gr input:(3+{2d6!<2-1,5d8r3r5>3,1d6^3}dl2)*2d6
 Result: 16
@@ -29,7 +29,7 @@ If you aren't familiar with Roll20 syntax, here's a rough primer. A dice string 
 * `%` is modulo, which returns the remainder of dividing the left side with the right side. So `25%10` equals 5.
 * `^` is an exponent. So `3^2` is 3<sup>2</sup> which equals 9.
 
-These math functions are not always resolved in the order they are written. Exponents are resolved first. Then multiplication, dividion, and modulo. Then addition and subtraction. So `2+3*4^5` is actually executed like this `2+(3*(4^5))`. You can override this order by adding brackets. So if you wanted resolve the previous string in the order it was written you could instead write `((2+3)*4)^5`.
+These math functions are not always resolved in the order they are written. Exponents are resolved first. Then multiplication, division, and modulo. Then addition and subtraction. So `2+3*4^5` is actually executed like this `2+(3*(4^5))`. You can override this order by adding brackets. So if you wanted resolve the previous string in the order it was written you could instead write `((2+3)*4)^5`.
 
 Dice Bot also supports the following basic math functions.
 
@@ -57,17 +57,17 @@ This will do the same thing as the previous roll, but add 2 to the result for a 
 
 If you need to do more with dice than just roll them you've got some modifiers you can add to the dice string. Many of these include something called a compare point, which will be covered below. Here are the modifiers.
 
-* `!` causes the dice pool to explode. Which means that all dice rolled at their maximum value cause an additional dice to be rolled and added to the pool. If those dice also roll the maximum value this causes more dice to be added. `!` can include a compare point so `4d6!5` means all 5s will expode while `4d6!>5` means all results greater than 4 will explode.
+* `!` causes the dice pool to explode. Which means that all dice rolled at their maximum value cause an additional dice to be rolled and added to the pool. If those dice also roll the maximum value this causes more dice to be added. `!` can include a compare point so `4d6!5` means all 5s will explode while `4d6!>5` means all results greater than 4 will explode.
 
 * `!!` causes a compounding explosion. This functions the same as a regular explosion except that the exploding values are added to the values of the dice that rolled the explosion rather than to the pool as a whole. So if `4d6!` rolled 3, 2, 6, 5 you'd roll another die and add it to the list. But in the `4d6!!` case the value of the extra die roll would be added to the 6. Compounding explosions also support compare points.
 
 * `!p` causes a penetrating explosion, which is like a regular explosion except every extra die rolled has a -1 modifier applied to it. Some specific games require this feature. As with other explosions, compare points are supported.
 
-* `r` causes dice to be rerolled. It must be followed by a compare point which defines which dice are rerolled. So `r4` rerolls all 4s and `r<3` rerolls all numbers less than 3. You can chain `r` modifiers to be more specific. For example, `r3r5` rerolls all 3s and 5s. If the rerolled numbers still match the reroll conditiond they are rolled again. In results, rerolls appear as discarded dice with new dice added so you can see how many rerolls occurred.
+* `r` causes dice to be rerolled. It must be followed by a compare point which defines which dice are rerolled. So `r4` rerolls all 4s and `r<3` rerolls all numbers less than 3. You can chain `r` modifiers to be more specific. For example, `r3r5` rerolls all 3s and 5s. If the rerolled numbers still match the reroll conditions they are rolled again. In results, rerolls appear as discarded dice with new dice added so you can see how many rerolls occurred.
 
-* `ro` is the same as reroll except that dice are only rerolled once even if the second roll matches the reroll condition. While you can mix `r` and `ro` modifiers, they won't chain together the same way that they do when like modifiers are chained. For example `4d6r4r5` cannot have 4s or 5s in it's results because it will reroll both of them until none are present. But `4d5r4ro5` can have both 4s and 5s in the result because it will reroll all 4s until there are none, but then reroll any 5s once and any dice result in 4s or 5s without being rerolled.
+* `ro` is the same as reroll except that dice are only rerolled once even if the second roll matches the reroll condition. While you can mix `r` and `ro` modifiers, they won't chain together the same way that they do when like modifiers are chained. For example `4d6r4r5` cannot have 4s or 5s in its results because it will reroll both of them until none are present. But `4d5r4ro5` can have both 4s and 5s in the result because it will reroll all 4s until there are none, but then reroll any 5s once and any dice result in 4s or 5s without being rerolled.
 
-* `k` and `d` will keep or drop all dice that don't match an included compare point. So `4d6k>4` will discard all dice that are less than or equal to 4 and `4d6d3` will drop all 3s. Like rerolls, like modifiers can be chained together so `4d6k1k3k5` will keep all 1s, 3s, and 5s.
+* `k` and `d` will keep or drop all dice that don't match an included compare point. So `4d6k>4` will discard all dice that are less than or equal to 4 and `4d6d3` will drop all 3s. Like with rerolls, like modifiers can be chained together so `4d6k1k3k5` will keep all 1s, 3s, and 5s.
 
 * `kh` (keep high), `kl` (keep low), `dh` (drop high), and `dl` (drop low) can be used to drop or keep the highest or lowest die in a set. So `4d6kh` will discard all but the highest die and `4d6dl` will discard the lowest die. You can include a number after these modifiers to drop or keep a specific number of dice. So `4d6kl2` will discard all but the two lowest dice.
 
@@ -75,7 +75,7 @@ A bunch of these modifiers mention compare points which can be one of 3 things.
 
 * An integer on it's own or `=` followed by an integer will match any die whose value matches the given integer. So `r4` or `r=4` will both reroll all 4s.
 
-* `>` followed by an integer will match all dice whose value is greather than the given integer. So `!>4` will explode all dice greater than 4.
+* `>` followed by an integer will match all dice whose value is greater than the given integer. So `!>4` will explode all dice greater than 4.
 
 * `<` followed by an integer will match all dice whose value is less than the given integer. So `d<4` will drop all dice less than 4.
 
@@ -85,19 +85,19 @@ The modifier part of the dice roll can include any number of these modifiers. `4
 
 By default, any pool of dice, after modifiers are applied, will have all the dice values summed up to produce a result. You can change that behavior by applying one, and only one, modifier. There are two supported aggregators. A success/fail aggregator and a match counting aggregator.
 
-* If the dice string ends with a compare point, a success aggregation is preformed where every die whose value matches the compare point counts as a success. So if `4d6>3` rolls 1, 4, 5, and 2 the result is 2. You can add an `f` and a second compare point to count failures that deduct from the count. So if `4d6>4f<3` rolls 5, 2, 6, 3 the result is 1. If the number of failues are greater than the number of successes the result will be a negative number.
+* If the dice string ends with a compare point, a success aggregation is performed where every die whose value matches the compare point counts as a success. So if `4d6>3` rolls 1, 4, 5, and 2 the result is 2. You can add an `f` and a second compare point to count failures that deduct from the count. So if `4d6>4f<3` rolls 5, 2, 6, 3 the result is 1. If the number of failures are greater than the number of successes the result will be a negative number.
 
-* If you just want to make matches easier to spot you can add an `m` to your roll. This won't change how the result is calculated, but it will sort the result string so that larger numbers of matches and higher matching numbers appear together and closer to the left. So `8d6m` might give you 1, 1, 1, 5, 5, 3, 2, 4 as results instead of scattering them so you have to find them yourself. If you instead use `mt` the result of the roll will be he number of matches found in addition to the sorting. So if `8d6mt` gave the same rolls it did in the previous example the result would be 2 for the 2 matches instead of 22 which is the sum of the dice.
+* If you just want to make matches easier to spot you can add an `m` to your roll. This won't change how the result is calculated, but it will sort the result string so that larger numbers of matches and higher matching numbers appear together and closer to the left. So `8d6m` might give you 1, 1, 1, 5, 5, 3, 2, 4 as results instead of scattering them so you have to find them yourself. If you instead use `mt` the result of the roll will be the number of matches found in addition to the sorting. So if `8d6mt` gave the same rolls it did in the previous example the result would be 2 for the 2 matches instead of 22 which is the sum of the dice.
 
 ### Grouping / Lists
 
 Groups / lists denote two different ways of using curly brackets that you can use to a few specific modifiers or aggregators in situations you couldn't otherwise.
 
-Lists are very simple. They're a sequence of equations, which can include dice rolls, wrapped in curly brackets and separated by commas. `{2d6+3,8d4!,(3+2)^4}` would be a valid list. By default, each entry in the list is resolved to it's respective number and will simply be summed together. But you can apply some modifiers as we'll discuss shortly.
+Lists are very simple. They're a sequence of equations, which can include dice rolls, wrapped in curly brackets and separated by commas. `{2d6+3,8d4!,(3+2)^4}` would be a valid list. By default, each entry in the list is resolved to its respective number and will simply be summed together. But you can apply some modifiers as we'll discuss shortly.
 
-Dice groups are a special kind of list used to combine different types of dice into a single roll. They are made by putting a series of dice rolls inside curly brackets and linking them with `+` signs. The rolls themselves can include modifiers but you can't include any other math functions or operate on numbers. For example, `{2d6!+3d10r3r5}` is a valid dice list, but `{2d6+2d8+3}` will be treated as a single entry list. When taking actions on a die group each die is treated as it's own entry in a list rather than the whole roll being 1 entry.
+Dice groups are a special kind of list used to combine different types of dice into a single roll. They are made by putting a series of dice rolls inside curly brackets and linking them with `+` signs. The rolls themselves can include modifiers but you can't include any other math functions or operate on numbers. For example, `{2d6!+3d10r3r5}` is a valid dice list, but `{2d6+2d8+3}` will be treated as a single entry list. When taking actions on a die group each die is treated as its own entry in a list rather than the whole roll being 1 entry.
 
-Regardless of whether your grouping dice or making a list there here are the actions you can take on them. Keep in mind that only 1 of these modifiers can be applied, you can't chain them together like you can with dice.
+Regardless of whether you're grouping dice or making a list, here are the actions you can take on them. Keep in mind that only 1 of these modifiers can be applied, you can't chain them together like you can with dice.
 
 * `k`, `d`, `kh`, `kl`, `dh`, and `dl` can all be applied. These keep or drop numbers from the list just as they do with dice. So `{2d6+2d8}kh3` would discard all but the 3 highest dice among the rolled d6s and d8s while `{2d6,2d8}dl` would roll and sum the d6s and d8s individually and drop the lowest of the two results.
 
@@ -105,13 +105,13 @@ Regardless of whether your grouping dice or making a list there here are the act
 
 ## Running the Bot
 
-**Disclaimer:** I'm going to write this assuming some base line technical knowledge. If you aren't familar with Git or Node.js I recommend looking up some beginner tutorials first. I'm also not a native Node.js developer and thus a poor person to learn from.
+**Disclaimer:** I'm going to write this assuming some baseline technical knowledge. If you aren't familiar with Git or Node.js I recommend looking up some beginner tutorials first. I'm not a native Node.js developer and thus a poor person to learn from.
 
 The broad steps for running the bot, once you have a copy of the code base, are as follows. Commands must be run from the directory containing the bot's files.
 
-1) [Create a bot](https://discordjs.guide/preparations/setting-up-a-bot-application.html) and [add it to your server](https://discordjs.guide/preparations/adding-your-bot-to-servers.html). During this step make sure to record your bot's token (generated by clicking "Reset Token" on the Bot page) and Application ID (on the General Information page). IMPORTANT: Keep your bot's token secret. If it is every compromised generate a new one ASAP.
+1) [Create a bot](https://discordjs.guide/preparations/setting-up-a-bot-application.html) and [add it to your server](https://discordjs.guide/preparations/adding-your-bot-to-servers.html). During this step make sure to record your bot's token (generated by clicking "Reset Token" on the Bot page) and Application ID (on the General Information page). IMPORTANT: Keep your bot's token secret. If it is ever compromised generate a new one ASAP.
 
-2) Install node.js version 16.16.0 or newer. Only 16.9.0 should be required but 16.16.0 is the one I've tested.
+2) Install [Node.js](https://nodejs.org) version 16.16.0 or newer. Only 16.9.0 should be required but 16.16.0 is the one I've tested.
 
 3) Install the bot's dependencies using `npm install`. this will install [Discord.js](https://discord.js.org), [ESLint](https://eslint.org/), and [Sinon.js](https://sinonjs.org/). If you want to run the tests you'll also need to install [Mocha](https://mochajs.org/).
 
@@ -121,4 +121,4 @@ The broad steps for running the bot, once you have a copy of the code base, are 
 
 6) Run the bot itself using `npm run start`. The bot will print "Ready!" in the command prompt at which point, if all has gone well, it will appear online in Discord and will respond to commands.
 
-Once you have it running you can keep it on your own machine, starting and stopping it as needed, or deploy it to a service like Heroku. Unfortunately, if I am a poor person to learn Node.js from I'm an even worse person to learn Heroku from. I've included the `Procfile` I used to do so, but recommend seeking out other sources for how to use it. The important bit is that it needs to run as a worker, not a web application, or it will crash during startup.
+Once you have it running you can keep it on your own machine, starting and stopping it as needed, or deploy it to a service like Heroku. Unfortunately, if I am a poor person to learn Node.js from I'm an even worse person to learn Heroku from. I've included the `Procfile` I used to do so, but recommend seeking out other sources for how to use it. The important bit is that it needs to run as a worker, not a web application, or it will crash during startup. Depending on how you deploy it you may also need to remove the `.gitignore` file as this filters out important files like the `config.json` file.
