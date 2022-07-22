@@ -59,7 +59,7 @@ This will do the same thing as the previous roll, but add 2 to the result for a 
 
 If you need to do more with dice than just roll them you've got some modifiers you can add to the dice string. Many of these include something called a compare point, which will be covered below. Here are the modifiers.
 
-* `!` causes the dice pool to explode. Which means that all dice rolled at their maximum value cause an additional dice to be rolled and added to the pool. If those dice also roll the maximum value this causes more dice to be added. `!` can include a compare point so `4d6!5` means all 5s will explode while `4d6!>5` means all results greater than 4 will explode.
+* `!` causes the dice pool to explode. Which means that all dice rolled at their maximum value cause an additional dice to be rolled and added to the pool. If those dice also roll the maximum value this causes more dice to be added. `!` can include a compare point so `4d6!5` means all 5s will explode while `4d6!>4` means all results greater than 4 will explode.
 
 * `!!` causes a compounding explosion. This functions the same as a regular explosion except that the exploding values are added to the values of the dice that rolled the explosion rather than to the pool as a whole. So if `4d6!` rolled 3, 2, 6, 5 you'd roll another die and add it to the list. But in the `4d6!!` case the value of the extra die roll would be added to the 6. Compounding explosions also support compare points.
 
