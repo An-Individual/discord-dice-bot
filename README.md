@@ -1,5 +1,7 @@
 # Discord Dice Bot
 
+_**Current State: Minimum Viable Product. If you encounter a bug please file an issue containing the input that caused it and the message it generated.**_
+
 If you're here to read code, I must apologize in advance. This project is the jet lagged fever dream of someone only semi-familiar with Javascript more or less making it up as they go. Read at your peril.
 
 If, however, you're just looking for a Discord bot that can roll some dice. Welcome! Dice Bot here is a chat bot that adds slash commands to your server that more or less mimic Roll20's dice rolling syntax. It runs on [Node.js](https://nodejs.org) using [Discord.js](https://discord.js.org). Hosting is expensive so you can't just link the bot to your server, but with some modest technical knowledge it isn't too hard to run on a computer you own or on the free tier of a service like Heroku. It's pretty fully featured so you can `/r input:(3+{2d6!<2-1,5d8r3r5>3,1d6^3}dl2)*2d6` if you can find a use for it.
