@@ -1,0 +1,6 @@
+{
+    "clientId": "<application-id>",
+    "token": "<application-token>",
+    "maxDicePerRoll": 100000,
+    "maxMessageLength": 1000
+}
