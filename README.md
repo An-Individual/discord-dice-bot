@@ -1,6 +1,6 @@
 # Discord Dice Bot
 
-_**Current State: Minimum Viable Product. If you encounter a bug please file an issue containing the input that caused it and the message it generated.**_
+_**Current State: New but functional. Basic use cases should all be stable but it hasn't spent much time in the wild. If you encounter a bug please file an issue containing the string that caused it and the resulting message.**_
 
 If you're here to read code, I must apologize in advance. This project is the jet lagged fever dream of someone only semi-familiar with Javascript more or less making it up as they go. Read at your peril.
 
