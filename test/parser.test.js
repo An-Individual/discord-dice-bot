@@ -217,7 +217,6 @@ describe('processSimpleDiceString Tests', () => {
 		const result = parser.ProcessFunctions.processSimpleDiceString(iterator, 3);
 
 		assert.equal(result.numDice, 3);
-		assert.equal(result.sides.length, 3);
 		assert.equal(result.numSides, 1);
 		assert.equal(result.minValue, -1);
 		assert.equal(result.getResolveType(), ParserObjects.ParserResolveTypes.DICE_ROLL);
