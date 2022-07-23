@@ -169,20 +169,33 @@ class CarvingFunctions {
 				continue;
 			}
 
+			let mathInvolved = false;
+			let emptyRight;
 			if (result[result.length - 1] instanceof MathFunction) {
-				const emptyRight = this.getMathFuncWithEmptyRightSlot(result[result.length - 1]);
-				if (!emptyRight) {
-					throw new Error('Math syntax error');
-				}
-				emptyRight.right = elements[i];
+				mathInvolved = true;
+				emptyRight = this.getMathFuncWithEmptyRightSlot(result[result.length - 1]);
 			}
-			else if (elements[i] instanceof MathFunction) {
-				const emptyLeft = this.getMathFuncWithEmptyLeftSlot(elements[i]);
-				if (!emptyLeft) {
+
+			let emptyLeft;
+			if (elements[i] instanceof MathFunction) {
+				mathInvolved = true;
+				emptyLeft = this.getMathFuncWithEmptyLeftSlot(elements[i]);
+			}
+
+			if (mathInvolved) {
+				if (emptyRight && !emptyLeft) {
+					emptyRight.right = elements[i];
+				}
+				else if (!emptyRight && emptyLeft) {
+					emptyLeft.left = result.pop();
+					result.push(elements[i]);
+				}
+				else {
+					// Either we have 2 math functions both looking to consume
+					// their neighbor or 2 unlinked math functions, both of which
+					// imply a syntax issue of some kind.
 					throw new Error('Math syntax error');
 				}
-				emptyLeft.left = result.pop();
-				result.push(elements[i]);
 			}
 			else {
 				result.push(elements[i]);

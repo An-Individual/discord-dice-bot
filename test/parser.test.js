@@ -1319,6 +1319,17 @@ describe('ResolveDiceString Tests', () => {
 		assert.equal(result.text, '(~~([8] + [2])~~ + ([7] + [6]))');
 		assert.equal(result.type, ParserObjects.ResolvedNumberType.UNTYPED);
 	});
+
+	it('Number to the power of brackets plus a number', () => {
+		const tracker = new TestTracker();
+		// This string looks innocent but it crates specific challenges
+		// for the math folding that can cause errors.
+		const result = parser.ResolveDiceString('1^(3-2)+3', tracker);
+
+		assert.equal(result.value, 4);
+		assert.equal(result.text, '1 ^ (3 - 2) + 3');
+		assert.equal(result.type, ParserObjects.ResolvedNumberType.UNTYPED);
+	});
 });
 
 function setRollSequence(sequence) {
