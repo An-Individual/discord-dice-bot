@@ -8,7 +8,7 @@ If, however, you're just looking for a Discord bot that can roll some dice. Welc
 
 ![/gr input:(3+{2d6!<2-1,5d8r3r5>3,1d6^3}dl2)*2d6
 Result: 16
-(3 + (([1] ^ 3) + (([2] + [2] + [4] + [4] + [6])) + (([1] + [2] + [1] + [2]) - 1))) * ([1] + [1])](https://github.com/An-Individual/images/blob/main/dicebotexample.JPG?raw=true "Dice Bot Example")
+(3 + (([1] ^ 3) + (([2] + [2] + [4] + [4] + [6])) + (([1] + [2] + [1] + [2]) - 1))) * ([1] + [1])](https://github.com/An-Individual/images/blob/main/dicebotexample2.JPG?raw=true "Dice Bot Example")
 
 ## Syntax
 
