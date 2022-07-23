@@ -3,10 +3,10 @@ const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
 const { clientId, token } = require('./config.json');
 
-const rollDescription = 'Rolls dice';
-const gmRollDescription = 'Rolls dice privately';
+const rollDescription = 'Rolls dice. For syntax see: https://github.com/An-Individual/discord-dice-bot';
+const gmRollDescription = 'Rolls dice privately. For syntax see: https://github.com/An-Individual/discord-dice-bot';
 const commandOption = option => option.setName('input')
-	.setDescription('The dice string')
+	.setDescription('The dice string. For syntax see: https://github.com/An-Individual/discord-dice-bot')
 	.setRequired(true);
 
 const commands = [
