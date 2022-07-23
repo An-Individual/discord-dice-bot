@@ -525,7 +525,7 @@ class ProcessFunctions {
 
 		if (current.value === 'f') {
 			iterator.next();
-			return new ParserObjects.CustomDiceRoll(numDice, [-1, 0, 1]);
+			return new ParserObjects.DiceRoll(numDice, 1, -1);
 		}
 
 		throwIfDone(current.done);

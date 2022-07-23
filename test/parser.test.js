@@ -207,10 +207,8 @@ describe('processSimpleDiceString Tests', () => {
 		const result = parser.ProcessFunctions.processSimpleDiceString(iterator, 1);
 
 		assert.equal(result.numDice, 1);
-		assert.equal(result.sides.length, 3);
-		assert.equal(result.sides[0], -1);
-		assert.equal(result.sides[1], 0);
-		assert.equal(result.sides[2], 1);
+		assert.equal(result.numSides, 1);
+		assert.equal(result.minValue, -1);
 		assert.equal(result.getResolveType(), ParserObjects.ParserResolveTypes.DICE_ROLL);
 	});
 
@@ -220,9 +218,8 @@ describe('processSimpleDiceString Tests', () => {
 
 		assert.equal(result.numDice, 3);
 		assert.equal(result.sides.length, 3);
-		assert.equal(result.sides[0], -1);
-		assert.equal(result.sides[1], 0);
-		assert.equal(result.sides[2], 1);
+		assert.equal(result.numSides, 1);
+		assert.equal(result.minValue, -1);
 		assert.equal(result.getResolveType(), ParserObjects.ParserResolveTypes.DICE_ROLL);
 	});
 });

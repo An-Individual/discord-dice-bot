@@ -40,7 +40,7 @@ Dice Bot also supports the following basic math functions.
 * `round(x)` rounds `x` to the nearest whole number. So `round(2.5)` is 3 and `round(2.4)` returns 2.
 * `abs(x)` returns the absolute value of `x`. So `abs(-3)` returns 3.
 
-Anywhere in the math a number could appear can be replaced with a dice string or a grouping/list. Dice strings themselves use the following format where X is the number of sides the dice have.
+Anywhere in the math a number could appear can be replaced with a dice string or a grouping/list. Dice strings themselves use the following format where X is the number of sides the dice have. You can also repace X with 'f' instead of a number to roll Fudge dice.
 
 `[# dice]dX[modifiers][aggregator]`
 

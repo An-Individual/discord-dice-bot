@@ -53,10 +53,11 @@ class ParserOperatorObject extends ParserObject {
 }
 
 class DiceRoll extends ParserObject {
-	constructor(numDice, numSides) {
+	constructor(numDice, numSides, minValue) {
 		super();
 		this.numDice = numDice;
 		this.numSides = numSides;
+		this.minValue = !minValue ? 1 : minValue;
 	}
 
 	getResolveType() {
@@ -65,7 +66,7 @@ class DiceRoll extends ParserObject {
 
 	resolve(tracker) {
 		tracker.notifyNewDice(this.numDice);
-		return DiceFunctions.rollDice(this.numDice, 1, this.numSides);
+		return DiceFunctions.rollDice(this.numDice, this.minValue, this.numSides);
 	}
 }
 
