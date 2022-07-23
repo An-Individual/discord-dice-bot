@@ -23,7 +23,9 @@ If you're familiar with [Roll20 syntax](https://wiki.roll20.net/Dice_Reference) 
 
 Dice Bot also lets you mix in more modifiers and executes them from left to right instead of in a predefined order, which might produce odd results (eg. dropping dice and then exploding them will produce different results from exploding dice and then dropping them).
 
-If you aren't familiar with Roll20 syntax, here's a rough primer. A dice string is effectively just a math string with dice mixed into it. These dice rolls can have modifiers tagged onto them triggering features like explosions and rerolls, as well as aggregators that produce numbers by counting or matching the dice instead of just summing them. The supported math characters are as follows.
+If you're new to this kind of syntax, or want to know the specific quirks of this implementation, read on.
+
+A dice string is effectively just a math string with dice mixed into it. These dice rolls can have modifiers tagged onto them triggering features like explosions and rerolls, as well as aggregators that produce numbers by counting or matching the dice instead of just summing them. The supported math characters are as follows.
 
 * `+` and `-` are addition and subtraction. So `3+2` equals 5.
 * `*` is used for multiplication. So `3*2` equals 6.
