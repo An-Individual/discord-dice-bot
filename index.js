@@ -1,11 +1,52 @@
 // Require the necessary discord.js classes
-const { Client, Intents } = require('discord.js');
+const { Client } = require('discord.js');
 const { token, maxDicePerRoll, maxMessageLength } = require('./config.json');
 const parser = require('./parser');
 const parserObjects = require('./parser-objects');
 
-// Create a new client instance
 const client = new Client({ intents: [] });
+
+/*
+// Uncomment this code and remove the client creation step above to enable the bot to
+// respond to direct messages.
+
+const { Intents } = require('discord.js');
+
+// Create a new client instance
+const client = new Client({ partials: ['CHANNEL'], intents: [Intents.FLAGS.DIRECT_MESSAGES] });
+
+client.on('messageCreate', async message => {
+	// Only handle direct messages by non-bots.
+	if (message.author.bot ||
+		message.guildId) {
+		return;
+	}
+
+	const input = TrimCommand(message.content);
+	let response = processStringAndCreateResponse(input);
+	response = enforceMessageLengthLimit(response);
+
+	await message.reply(response);
+});
+
+function TrimCommand(input) {
+	if (!input || !input.startsWith('/')) {
+		return input;
+	}
+
+	let idx = input.indexOf(':');
+	if (idx >= 0) {
+		return input.substr(idx + 1);
+	}
+
+	idx = input.indexOf(' ');
+	if (idx >= 0) {
+		return input.substr(idx + 1);
+	}
+
+	return input;
+}
+*/
 
 // When the client is ready, run this code (only once)
 client.once('ready', () => {
@@ -31,12 +72,18 @@ client.on('interactionCreate', async interaction => {
 	input = parser.standardizeDiceString(input);
 
 	let response = `> \`/${interaction.commandName} input:${input}\`\n${result}`;
-	if (response.length > maxMessageLength) {
-		response = response.substr(0, maxMessageLength - 3) + '...';
-	}
+	response = enforceMessageLengthLimit(response);
 
 	await interaction.reply({ content: response, ephemeral: gmRoll });
 });
+
+function enforceMessageLengthLimit(response) {
+	if (response && response.length > maxMessageLength) {
+		return response.substr(0, maxMessageLength - 3) + '...';
+	}
+
+	return response;
+}
 
 function processStringAndCreateResponse(input) {
 	try {
