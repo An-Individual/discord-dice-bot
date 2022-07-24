@@ -5,7 +5,7 @@ const parser = require('./parser');
 const parserObjects = require('./parser-objects');
 
 // Create a new client instance
-const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
+const client = new Client({ intents: [] });
 
 // When the client is ready, run this code (only once)
 client.once('ready', () => {
