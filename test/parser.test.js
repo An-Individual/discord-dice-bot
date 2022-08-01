@@ -1,45 +1,47 @@
 /* eslint-disable no-undef */
 const assert = require('assert');
-const parser = require('../parser');
+const { ProcessFunctions, ResolveDiceString, isIntChar, standardizeDiceString } = require('../parser');
+const { DiceStringIterator } = require('../parser.iterator');
+const { Brackets } = require('../parser.carving');
 const ParserObjects = require('../parser-objects');
 const sinon = require('sinon');
 
 describe('Roll Parser Standardization', () => {
 	it('Remove spaces', () => {
-		assert.equal(parser.standardizeDiceString(' 1 2 3 '), '123');
+		assert.equal(standardizeDiceString(' 1 2 3 '), '123');
 	});
 
 	it('Remove new lines', () => {
-		assert.equal(parser.standardizeDiceString('\r\n1\r\n2\r\n3\r\n'), '123');
+		assert.equal(standardizeDiceString('\r\n1\r\n2\r\n3\r\n'), '123');
 	});
 
 	it('Remove tabs', () => {
-		assert.equal(parser.standardizeDiceString('\t1\t2\t3\t'), '123');
+		assert.equal(standardizeDiceString('\t1\t2\t3\t'), '123');
 	});
 
 	it('Lower case', () => {
-		assert.equal(parser.standardizeDiceString('ABC123'), 'abc123');
+		assert.equal(standardizeDiceString('ABC123'), 'abc123');
 	});
 });
 
 describe('StringIterator Tests', () => {
 	it('Empty string immediately done', () => {
 		const text = '';
-		const iterator = new parser.DiceStringIterator(text);
+		const iterator = new DiceStringIterator(text);
 
 		assert.equal(iterator.next().done, true);
 	});
 
 	it('Empty string peek is done', () => {
 		const text = '';
-		const iterator = new parser.DiceStringIterator(text);
+		const iterator = new DiceStringIterator(text);
 
 		assert.equal(iterator.peek().done, true);
 	});
 
 	it('All characters match', () => {
 		const text = 'abc123';
-		const iterator = new parser.DiceStringIterator(text);
+		const iterator = new DiceStringIterator(text);
 
 		for (let i = 0; i < text.length; i++) {
 			assert.equal(iterator.next().value, text[i]);
@@ -48,7 +50,7 @@ describe('StringIterator Tests', () => {
 
 	it('Iterator terminates', () => {
 		const text = 'abc123';
-		const iterator = new parser.DiceStringIterator(text);
+		const iterator = new DiceStringIterator(text);
 
 		let i = 0;
 		while (!iterator.next().done) {
@@ -60,7 +62,7 @@ describe('StringIterator Tests', () => {
 
 	it('Peeks match next', () => {
 		const text = 'abc123';
-		const iterator = new parser.DiceStringIterator(text);
+		const iterator = new DiceStringIterator(text);
 
 		for (let i = 0; i < text.length + 1; i++) {
 			const peek = iterator.peek();
@@ -73,111 +75,111 @@ describe('StringIterator Tests', () => {
 
 describe('isIntChar Tests', () => {
 	it('Undefined input returns false', () => {
-		assert.equal(parser.isIntChar({}.value), false);
+		assert.equal(isIntChar({}.value), false);
 	});
 
 	it('Not int char returns false', () => {
-		assert.equal(parser.isIntChar('.'), false);
+		assert.equal(isIntChar('.'), false);
 	});
 
 	it('Numbers return true', () => {
-		assert.equal(parser.isIntChar('0'), true);
-		assert.equal(parser.isIntChar('1'), true);
-		assert.equal(parser.isIntChar('2'), true);
-		assert.equal(parser.isIntChar('3'), true);
-		assert.equal(parser.isIntChar('4'), true);
-		assert.equal(parser.isIntChar('5'), true);
-		assert.equal(parser.isIntChar('6'), true);
-		assert.equal(parser.isIntChar('7'), true);
-		assert.equal(parser.isIntChar('8'), true);
-		assert.equal(parser.isIntChar('9'), true);
-		assert.equal(parser.isIntChar('-'), true);
+		assert.equal(isIntChar('0'), true);
+		assert.equal(isIntChar('1'), true);
+		assert.equal(isIntChar('2'), true);
+		assert.equal(isIntChar('3'), true);
+		assert.equal(isIntChar('4'), true);
+		assert.equal(isIntChar('5'), true);
+		assert.equal(isIntChar('6'), true);
+		assert.equal(isIntChar('7'), true);
+		assert.equal(isIntChar('8'), true);
+		assert.equal(isIntChar('9'), true);
+		assert.equal(isIntChar('-'), true);
 	});
 });
 
 describe('processInt Tests', () => {
 	it('Empty iterator throws error', () => {
-		const iterator = new parser.DiceStringIterator('');
+		const iterator = new DiceStringIterator('');
 		assert.throws(() => {
-			parser.ProcessFunctions.processInt(iterator);
+			ProcessFunctions.processInt(iterator);
 		});
 	});
 
 	it('Not integer throws error', () => {
-		const iterator = new parser.DiceStringIterator('.');
+		const iterator = new DiceStringIterator('.');
 		assert.throws(() => {
-			parser.ProcessFunctions.processInt(iterator);
+			ProcessFunctions.processInt(iterator);
 		});
 	});
 
 	it('Single char int is read', () => {
-		const iterator = new parser.DiceStringIterator('5');
-		assert.equal(parser.ProcessFunctions.processInt(iterator), 5);
+		const iterator = new DiceStringIterator('5');
+		assert.equal(ProcessFunctions.processInt(iterator), 5);
 	});
 
 	it('Multi-char int is read', () => {
-		const iterator = new parser.DiceStringIterator('12345');
-		assert.equal(parser.ProcessFunctions.processInt(iterator), 12345);
+		const iterator = new DiceStringIterator('12345');
+		assert.equal(ProcessFunctions.processInt(iterator), 12345);
 	});
 
 	it('Stops at non-int chars', () => {
-		const iterator = new parser.DiceStringIterator('123.45');
-		assert.equal(parser.ProcessFunctions.processInt(iterator), 123);
+		const iterator = new DiceStringIterator('123.45');
+		assert.equal(ProcessFunctions.processInt(iterator), 123);
 		assert.equal(iterator.next().value, '.');
 	});
 
 	it('Starts at current iterator position', () => {
-		const iterator = new parser.DiceStringIterator('12345');
+		const iterator = new DiceStringIterator('12345');
 		iterator.next();
 		iterator.next();
-		assert.equal(parser.ProcessFunctions.processInt(iterator), 345);
+		assert.equal(ProcessFunctions.processInt(iterator), 345);
 	});
 
 	it('Regular negative number', () => {
-		const iterator = new parser.DiceStringIterator('-123');
-		assert.equal(parser.ProcessFunctions.processInt(iterator), -123);
+		const iterator = new DiceStringIterator('-123');
+		assert.equal(ProcessFunctions.processInt(iterator), -123);
 	});
 
 	it('"-" after start of string causes error', () => {
-		const iterator = new parser.DiceStringIterator('1-23');
+		const iterator = new DiceStringIterator('1-23');
 		assert.throws(() => {
-			parser.ProcessFunctions.processInt(iterator);
+			ProcessFunctions.processInt(iterator);
 		});
 	});
 });
 
 describe('processSimpleDiceString Tests', () => {
 	it('Empty iterator throws error', () => {
-		const iterator = new parser.DiceStringIterator('');
+		const iterator = new DiceStringIterator('');
 		assert.throws(() => {
-			parser.ProcessFunctions.processSimpleDiceString(iterator);
+			ProcessFunctions.processSimpleDiceString(iterator);
 		});
 	});
 
 	it('Throws an error if not started with a "d"', () => {
-		const iterator = new parser.DiceStringIterator('a6');
+		const iterator = new DiceStringIterator('a6');
 		assert.throws(() => {
-			parser.ProcessFunctions.processSimpleDiceString(iterator);
+			ProcessFunctions.processSimpleDiceString(iterator);
 		});
 	});
 
 	it('Throws an error if nothing after "d"', () => {
-		const iterator = new parser.DiceStringIterator('d');
+		const iterator = new DiceStringIterator('d');
 		assert.throws(() => {
-			parser.ProcessFunctions.processSimpleDiceString(iterator);
+			ProcessFunctions.processSimpleDiceString(iterator);
 		});
 	});
 
 	it('Throws an error if "d" not followed by a number or "f"', () => {
-		const iterator = new parser.DiceStringIterator('da');
+		const iterator = new DiceStringIterator('da');
 		assert.throws(() => {
-			parser.ProcessFunctions.processSimpleDiceString(iterator);
+			ProcessFunctions.processSimpleDiceString(iterator);
 		});
 	});
 
 	it('Single digit regular die', () => {
-		const iterator = new parser.DiceStringIterator('d6');
-		const result = parser.ProcessFunctions.processSimpleDiceString(iterator, 1);
+		const iterator = new DiceStringIterator('d6');
+		const result = ProcessFunctions.processSimpleDiceString(iterator, 1);
 
 		assert.equal(result.numDice, 1);
 		assert.equal(result.numSides, 6);
@@ -185,8 +187,8 @@ describe('processSimpleDiceString Tests', () => {
 	});
 
 	it('Multi-digit regular die', () => {
-		const iterator = new parser.DiceStringIterator('d20');
-		const result = parser.ProcessFunctions.processSimpleDiceString(iterator, 1);
+		const iterator = new DiceStringIterator('d20');
+		const result = ProcessFunctions.processSimpleDiceString(iterator, 1);
 
 		assert.equal(result.numDice, 1);
 		assert.equal(result.numSides, 20);
@@ -194,8 +196,8 @@ describe('processSimpleDiceString Tests', () => {
 	});
 
 	it('Multiple regular dice', () => {
-		const iterator = new parser.DiceStringIterator('d20');
-		const result = parser.ProcessFunctions.processSimpleDiceString(iterator, 3);
+		const iterator = new DiceStringIterator('d20');
+		const result = ProcessFunctions.processSimpleDiceString(iterator, 3);
 
 		assert.equal(result.numDice, 3);
 		assert.equal(result.numSides, 20);
@@ -203,8 +205,8 @@ describe('processSimpleDiceString Tests', () => {
 	});
 
 	it('Single fudge die', () => {
-		const iterator = new parser.DiceStringIterator('df');
-		const result = parser.ProcessFunctions.processSimpleDiceString(iterator, 1);
+		const iterator = new DiceStringIterator('df');
+		const result = ProcessFunctions.processSimpleDiceString(iterator, 1);
 
 		assert.equal(result.numDice, 1);
 		assert.equal(result.numSides, 1);
@@ -213,8 +215,8 @@ describe('processSimpleDiceString Tests', () => {
 	});
 
 	it('Multiple fudge dice', () => {
-		const iterator = new parser.DiceStringIterator('df');
-		const result = parser.ProcessFunctions.processSimpleDiceString(iterator, 3);
+		const iterator = new DiceStringIterator('df');
+		const result = ProcessFunctions.processSimpleDiceString(iterator, 3);
 
 		assert.equal(result.numDice, 3);
 		assert.equal(result.numSides, 1);
@@ -225,39 +227,39 @@ describe('processSimpleDiceString Tests', () => {
 
 describe('processComparePoint Tests', () => {
 	it('Empty iterator throws error', () => {
-		const iterator = new parser.DiceStringIterator('');
+		const iterator = new DiceStringIterator('');
 		assert.throws(() => {
-			parser.ProcessFunctions.processComparePoint(iterator);
+			ProcessFunctions.processComparePoint(iterator);
 		});
 	});
 
 	it('Starts with invalid character throws error', () => {
-		const iterator = new parser.DiceStringIterator('5');
+		const iterator = new DiceStringIterator('5');
 		assert.throws(() => {
-			parser.ProcessFunctions.processComparePoint(iterator);
+			ProcessFunctions.processComparePoint(iterator);
 		});
 	});
 
 	it('No following number throws error', () => {
-		let iterator = new parser.DiceStringIterator('=');
+		let iterator = new DiceStringIterator('=');
 		assert.throws(() => {
-			parser.ProcessFunctions.processComparePoint(iterator);
+			ProcessFunctions.processComparePoint(iterator);
 		});
 
-		iterator = new parser.DiceStringIterator('>');
+		iterator = new DiceStringIterator('>');
 		assert.throws(() => {
-			parser.ProcessFunctions.processComparePoint(iterator);
+			ProcessFunctions.processComparePoint(iterator);
 		});
 
-		iterator = new parser.DiceStringIterator('<');
+		iterator = new DiceStringIterator('<');
 		assert.throws(() => {
-			parser.ProcessFunctions.processComparePoint(iterator);
+			ProcessFunctions.processComparePoint(iterator);
 		});
 	});
 
 	it('= checks for specific value', () => {
-		const iterator = new parser.DiceStringIterator('=15');
-		const compareFunc = parser.ProcessFunctions.processComparePoint(iterator);
+		const iterator = new DiceStringIterator('=15');
+		const compareFunc = ProcessFunctions.processComparePoint(iterator);
 
 		assert.equal(compareFunc(15), true);
 		assert.equal(compareFunc(14), false);
@@ -265,8 +267,8 @@ describe('processComparePoint Tests', () => {
 	});
 
 	it('< checks for lower value', () => {
-		const iterator = new parser.DiceStringIterator('<15');
-		const compareFunc = parser.ProcessFunctions.processComparePoint(iterator);
+		const iterator = new DiceStringIterator('<15');
+		const compareFunc = ProcessFunctions.processComparePoint(iterator);
 
 		assert.equal(compareFunc(15), false);
 		assert.equal(compareFunc(14), true);
@@ -274,8 +276,8 @@ describe('processComparePoint Tests', () => {
 	});
 
 	it('> checks for higher value', () => {
-		const iterator = new parser.DiceStringIterator('>15');
-		const compareFunc = parser.ProcessFunctions.processComparePoint(iterator);
+		const iterator = new DiceStringIterator('>15');
+		const compareFunc = ProcessFunctions.processComparePoint(iterator);
 
 		assert.equal(compareFunc(15), false);
 		assert.equal(compareFunc(14), false);
@@ -285,8 +287,8 @@ describe('processComparePoint Tests', () => {
 
 describe('processModifierComparePoint Tests', () => {
 	it('Integer checks for specific value', () => {
-		const iterator = new parser.DiceStringIterator('15');
-		const compareFunc = parser.ProcessFunctions.processModifierComparePoint(iterator);
+		const iterator = new DiceStringIterator('15');
+		const compareFunc = ProcessFunctions.processModifierComparePoint(iterator);
 
 		assert.equal(compareFunc(15), true);
 		assert.equal(compareFunc(14), false);
@@ -294,12 +296,12 @@ describe('processModifierComparePoint Tests', () => {
 	});
 
 	it('Non-number calls processComparePoint', () => {
-		const iterator = new parser.DiceStringIterator('');
-		const spy = sinon.spy(parser.ProcessFunctions, 'processModifierComparePoint');
+		const iterator = new DiceStringIterator('');
+		const spy = sinon.spy(ProcessFunctions, 'processModifierComparePoint');
 
 		try {
 			assert.throws(() => {
-				parser.ProcessFunctions.processModifierComparePoint(iterator);
+				ProcessFunctions.processModifierComparePoint(iterator);
 			});
 		}
 		finally {
@@ -312,35 +314,35 @@ describe('processModifierComparePoint Tests', () => {
 
 describe('processKeepDropModifier Tests', () => {
 	it('Empty iterator throws error', () => {
-		const iterator = new parser.DiceStringIterator('');
+		const iterator = new DiceStringIterator('');
 		assert.throws(() => {
-			parser.ProcessFunctions.processKeepDropModifier(iterator, new ParserObjects.DiceRoll(1, 6));
+			ProcessFunctions.processKeepDropModifier(iterator, new ParserObjects.DiceRoll(1, 6));
 		});
 	});
 
 	it('Starts with invalid character throws error', () => {
-		const iterator = new parser.DiceStringIterator('5');
+		const iterator = new DiceStringIterator('5');
 		assert.throws(() => {
-			parser.ProcessFunctions.processKeepDropModifier(iterator, new ParserObjects.DiceRoll(1, 6));
+			ProcessFunctions.processKeepDropModifier(iterator, new ParserObjects.DiceRoll(1, 6));
 		});
 	});
 
 	it('"k" or "d" not followed by number throws error', () => {
-		let iterator = new parser.DiceStringIterator('k');
+		let iterator = new DiceStringIterator('k');
 		assert.throws(() => {
-			parser.ProcessFunctions.processKeepDropModifier(iterator, new ParserObjects.DiceRoll(1, 6));
+			ProcessFunctions.processKeepDropModifier(iterator, new ParserObjects.DiceRoll(1, 6));
 		});
 
-		iterator = new parser.DiceStringIterator('d');
+		iterator = new DiceStringIterator('d');
 		assert.throws(() => {
-			parser.ProcessFunctions.processKeepDropModifier(iterator, new ParserObjects.DiceRoll(1, 6));
+			ProcessFunctions.processKeepDropModifier(iterator, new ParserObjects.DiceRoll(1, 6));
 		});
 	});
 
 	it('Specific keep', () => {
-		const iterator = new parser.DiceStringIterator('k5');
+		const iterator = new DiceStringIterator('k5');
 		const roll = new ParserObjects.DiceRoll(1, 6);
-		const result = parser.ProcessFunctions.processKeepDropModifier(iterator, roll);
+		const result = ProcessFunctions.processKeepDropModifier(iterator, roll);
 
 		assert.equal(result instanceof ParserObjects.KeepDropConditional, true);
 		assert.equal(result.conditions[0](5), true);
@@ -349,9 +351,9 @@ describe('processKeepDropModifier Tests', () => {
 	});
 
 	it('Specific keep chain', () => {
-		const iterator = new parser.DiceStringIterator('k5k3k2');
+		const iterator = new DiceStringIterator('k5k3k2');
 		const roll = new ParserObjects.DiceRoll(1, 6);
-		const result = parser.ProcessFunctions.processKeepDropModifier(iterator, roll);
+		const result = ProcessFunctions.processKeepDropModifier(iterator, roll);
 
 		assert.equal(result instanceof ParserObjects.KeepDropConditional, true);
 		assert.equal(result.conditions.length, 3);
@@ -363,9 +365,9 @@ describe('processKeepDropModifier Tests', () => {
 	});
 
 	it('Keep high breaks keep chain', () => {
-		const iterator = new parser.DiceStringIterator('k5kh3k2');
+		const iterator = new DiceStringIterator('k5kh3k2');
 		const roll = new ParserObjects.DiceRoll(1, 6);
-		const result = parser.ProcessFunctions.processKeepDropModifier(iterator, roll);
+		const result = ProcessFunctions.processKeepDropModifier(iterator, roll);
 
 		assert.equal(result instanceof ParserObjects.KeepDropConditional, true);
 		assert.equal(result.conditions.length, 1);
@@ -375,9 +377,9 @@ describe('processKeepDropModifier Tests', () => {
 	});
 
 	it('Specific drop', () => {
-		const iterator = new parser.DiceStringIterator('d5');
+		const iterator = new DiceStringIterator('d5');
 		const roll = new ParserObjects.DiceRoll(1, 6);
-		const result = parser.ProcessFunctions.processKeepDropModifier(iterator, roll);
+		const result = ProcessFunctions.processKeepDropModifier(iterator, roll);
 
 		assert.equal(result instanceof ParserObjects.KeepDropConditional, true);
 		assert.equal(result.conditions[0](5), true);
@@ -386,9 +388,9 @@ describe('processKeepDropModifier Tests', () => {
 	});
 
 	it('Default keep high', () => {
-		const iterator = new parser.DiceStringIterator('kh');
+		const iterator = new DiceStringIterator('kh');
 		const roll = new ParserObjects.DiceRoll(1, 6);
-		const result = parser.ProcessFunctions.processKeepDropModifier(iterator, roll);
+		const result = ProcessFunctions.processKeepDropModifier(iterator, roll);
 
 		assert.equal(result instanceof ParserObjects.KeepDropHighLow, true);
 		assert.equal(result.isHigh, true);
@@ -398,9 +400,9 @@ describe('processKeepDropModifier Tests', () => {
 	});
 
 	it('Default drop high', () => {
-		const iterator = new parser.DiceStringIterator('dh');
+		const iterator = new DiceStringIterator('dh');
 		const roll = new ParserObjects.DiceRoll(1, 6);
-		const result = parser.ProcessFunctions.processKeepDropModifier(iterator, roll);
+		const result = ProcessFunctions.processKeepDropModifier(iterator, roll);
 
 		assert.equal(result instanceof ParserObjects.KeepDropHighLow, true);
 		assert.equal(result.isHigh, true);
@@ -410,9 +412,9 @@ describe('processKeepDropModifier Tests', () => {
 	});
 
 	it('Default keep low', () => {
-		const iterator = new parser.DiceStringIterator('kl');
+		const iterator = new DiceStringIterator('kl');
 		const roll = new ParserObjects.DiceRoll(1, 6);
-		const result = parser.ProcessFunctions.processKeepDropModifier(iterator, roll);
+		const result = ProcessFunctions.processKeepDropModifier(iterator, roll);
 
 		assert.equal(result instanceof ParserObjects.KeepDropHighLow, true);
 		assert.equal(result.isHigh, false);
@@ -422,9 +424,9 @@ describe('processKeepDropModifier Tests', () => {
 	});
 
 	it('Default drop low', () => {
-		const iterator = new parser.DiceStringIterator('dl');
+		const iterator = new DiceStringIterator('dl');
 		const roll = new ParserObjects.DiceRoll(1, 6);
-		const result = parser.ProcessFunctions.processKeepDropModifier(iterator, roll);
+		const result = ProcessFunctions.processKeepDropModifier(iterator, roll);
 
 		assert.equal(result instanceof ParserObjects.KeepDropHighLow, true);
 		assert.equal(result.isHigh, false);
@@ -434,9 +436,9 @@ describe('processKeepDropModifier Tests', () => {
 	});
 
 	it('Keep high with count', () => {
-		const iterator = new parser.DiceStringIterator('kh3');
+		const iterator = new DiceStringIterator('kh3');
 		const roll = new ParserObjects.DiceRoll(1, 6);
-		const result = parser.ProcessFunctions.processKeepDropModifier(iterator, roll);
+		const result = ProcessFunctions.processKeepDropModifier(iterator, roll);
 
 		assert.equal(result instanceof ParserObjects.KeepDropHighLow, true);
 		assert.equal(result.isHigh, true);
@@ -446,9 +448,9 @@ describe('processKeepDropModifier Tests', () => {
 	});
 
 	it('Drop high with count', () => {
-		const iterator = new parser.DiceStringIterator('dh3');
+		const iterator = new DiceStringIterator('dh3');
 		const roll = new ParserObjects.DiceRoll(1, 6);
-		const result = parser.ProcessFunctions.processKeepDropModifier(iterator, roll);
+		const result = ProcessFunctions.processKeepDropModifier(iterator, roll);
 
 		assert.equal(result instanceof ParserObjects.KeepDropHighLow, true);
 		assert.equal(result.isHigh, true);
@@ -458,9 +460,9 @@ describe('processKeepDropModifier Tests', () => {
 	});
 
 	it('Keep low with count', () => {
-		const iterator = new parser.DiceStringIterator('kl3');
+		const iterator = new DiceStringIterator('kl3');
 		const roll = new ParserObjects.DiceRoll(1, 6);
-		const result = parser.ProcessFunctions.processKeepDropModifier(iterator, roll);
+		const result = ProcessFunctions.processKeepDropModifier(iterator, roll);
 
 		assert.equal(result instanceof ParserObjects.KeepDropHighLow, true);
 		assert.equal(result.isHigh, false);
@@ -470,9 +472,9 @@ describe('processKeepDropModifier Tests', () => {
 	});
 
 	it('Drop low with count', () => {
-		const iterator = new parser.DiceStringIterator('dl3');
+		const iterator = new DiceStringIterator('dl3');
 		const roll = new ParserObjects.DiceRoll(1, 6);
-		const result = parser.ProcessFunctions.processKeepDropModifier(iterator, roll);
+		const result = ProcessFunctions.processKeepDropModifier(iterator, roll);
 
 		assert.equal(result instanceof ParserObjects.KeepDropHighLow, true);
 		assert.equal(result.isHigh, false);
@@ -484,35 +486,35 @@ describe('processKeepDropModifier Tests', () => {
 
 describe('processRerollModifier Tests', () => {
 	it('Empty iterator throws error', () => {
-		const iterator = new parser.DiceStringIterator('');
+		const iterator = new DiceStringIterator('');
 		assert.throws(() => {
-			parser.ProcessFunctions.processRerollModifier(iterator, new ParserObjects.DiceRoll(1, 6));
+			ProcessFunctions.processRerollModifier(iterator, new ParserObjects.DiceRoll(1, 6));
 		});
 	});
 
 	it('Starts with invalid character throws error', () => {
-		const iterator = new parser.DiceStringIterator('5');
+		const iterator = new DiceStringIterator('5');
 		assert.throws(() => {
-			parser.ProcessFunctions.processRerollModifier(iterator, new ParserObjects.DiceRoll(1, 6));
+			ProcessFunctions.processRerollModifier(iterator, new ParserObjects.DiceRoll(1, 6));
 		});
 	});
 
 	it('No compare point throws error', () => {
-		let iterator = new parser.DiceStringIterator('r');
+		let iterator = new DiceStringIterator('r');
 		assert.throws(() => {
-			parser.ProcessFunctions.processRerollModifier(iterator, new ParserObjects.DiceRoll(1, 6));
+			ProcessFunctions.processRerollModifier(iterator, new ParserObjects.DiceRoll(1, 6));
 		});
 
-		iterator = new parser.DiceStringIterator('ro');
+		iterator = new DiceStringIterator('ro');
 		assert.throws(() => {
-			parser.ProcessFunctions.processRerollModifier(iterator, new ParserObjects.DiceRoll(1, 6));
+			ProcessFunctions.processRerollModifier(iterator, new ParserObjects.DiceRoll(1, 6));
 		});
 	});
 
 	it('Regular reroll', () => {
-		const iterator = new parser.DiceStringIterator('r5');
+		const iterator = new DiceStringIterator('r5');
 		const roll = new ParserObjects.DiceRoll(1, 6);
-		const result = parser.ProcessFunctions.processRerollModifier(iterator, roll);
+		const result = ProcessFunctions.processRerollModifier(iterator, roll);
 
 		assert.equal(result instanceof ParserObjects.ReRoll, true);
 		assert.equal(result.conditionMatches(5), true);
@@ -521,9 +523,9 @@ describe('processRerollModifier Tests', () => {
 	});
 
 	it('Reroll once', () => {
-		const iterator = new parser.DiceStringIterator('ro5');
+		const iterator = new DiceStringIterator('ro5');
 		const roll = new ParserObjects.DiceRoll(1, 6);
-		const result = parser.ProcessFunctions.processRerollModifier(iterator, roll);
+		const result = ProcessFunctions.processRerollModifier(iterator, roll);
 
 		assert.equal(result instanceof ParserObjects.ReRoll, true);
 		assert.equal(result.conditionMatches(5), true);
@@ -532,9 +534,9 @@ describe('processRerollModifier Tests', () => {
 	});
 
 	it('Regular reroll chain', () => {
-		const iterator = new parser.DiceStringIterator('r5r3r>9');
+		const iterator = new DiceStringIterator('r5r3r>9');
 		const roll = new ParserObjects.DiceRoll(1, 6);
-		const result = parser.ProcessFunctions.processRerollModifier(iterator, roll);
+		const result = ProcessFunctions.processRerollModifier(iterator, roll);
 
 		assert.equal(result instanceof ParserObjects.ReRoll, true);
 		assert.equal(result.conditionMatches(5), true);
@@ -545,9 +547,9 @@ describe('processRerollModifier Tests', () => {
 	});
 
 	it('Reroll once chain', () => {
-		const iterator = new parser.DiceStringIterator('ro5ro3ro>9');
+		const iterator = new DiceStringIterator('ro5ro3ro>9');
 		const roll = new ParserObjects.DiceRoll(1, 6);
-		const result = parser.ProcessFunctions.processRerollModifier(iterator, roll);
+		const result = ProcessFunctions.processRerollModifier(iterator, roll);
 
 		assert.equal(result instanceof ParserObjects.ReRoll, true);
 		assert.equal(result.conditionMatches(5), true);
@@ -558,15 +560,15 @@ describe('processRerollModifier Tests', () => {
 	});
 
 	it('Mixing reroll and reroll once breaks condition chain', () => {
-		let iterator = new parser.DiceStringIterator('r5ro3');
-		const result1 = parser.ProcessFunctions.processRerollModifier(iterator, new ParserObjects.DiceRoll(1, 6));
+		let iterator = new DiceStringIterator('r5ro3');
+		const result1 = ProcessFunctions.processRerollModifier(iterator, new ParserObjects.DiceRoll(1, 6));
 
 		assert.equal(!result1.onlyOnce, true);
 		assert.equal(result1.conditions.length, 1);
 		assert.equal(result1.conditions[0](3), false);
 
-		iterator = new parser.DiceStringIterator('ro5r3');
-		const result2 = parser.ProcessFunctions.processRerollModifier(iterator, new ParserObjects.DiceRoll(1, 6));
+		iterator = new DiceStringIterator('ro5r3');
+		const result2 = ProcessFunctions.processRerollModifier(iterator, new ParserObjects.DiceRoll(1, 6));
 
 		assert.equal(result2.onlyOnce, true);
 		assert.equal(result2.conditions.length, 1);
@@ -576,23 +578,23 @@ describe('processRerollModifier Tests', () => {
 
 describe('processExplosionModifier Tests', () => {
 	it('Empty iterator throws error', () => {
-		const iterator = new parser.DiceStringIterator('');
+		const iterator = new DiceStringIterator('');
 		assert.throws(() => {
-			parser.ProcessFunctions.processExplosionModifier(iterator, new ParserObjects.DiceRoll(1, 6));
+			ProcessFunctions.processExplosionModifier(iterator, new ParserObjects.DiceRoll(1, 6));
 		});
 	});
 
 	it('Invalid character throws error', () => {
-		const iterator = new parser.DiceStringIterator('5');
+		const iterator = new DiceStringIterator('5');
 		assert.throws(() => {
-			parser.ProcessFunctions.processExplosionModifier(iterator, new ParserObjects.DiceRoll(1, 6));
+			ProcessFunctions.processExplosionModifier(iterator, new ParserObjects.DiceRoll(1, 6));
 		});
 	});
 
 	it('Regular unmodified explosion', () => {
-		const iterator = new parser.DiceStringIterator('!');
+		const iterator = new DiceStringIterator('!');
 		const roll = new ParserObjects.DiceRoll(1, 6);
-		const result = parser.ProcessFunctions.processExplosionModifier(iterator, roll);
+		const result = ProcessFunctions.processExplosionModifier(iterator, roll);
 
 		assert.equal(result instanceof ParserObjects.DiceExplosionRegular, true);
 		assert.equal(!result.condition, true);
@@ -600,9 +602,9 @@ describe('processExplosionModifier Tests', () => {
 	});
 
 	it('Regular explosion with condition', () => {
-		const iterator = new parser.DiceStringIterator('!5');
+		const iterator = new DiceStringIterator('!5');
 		const roll = new ParserObjects.DiceRoll(1, 6);
-		const result = parser.ProcessFunctions.processExplosionModifier(iterator, roll);
+		const result = ProcessFunctions.processExplosionModifier(iterator, roll);
 
 		assert.equal(result instanceof ParserObjects.DiceExplosionRegular, true);
 		assert.equal(result.condition(5), true);
@@ -610,9 +612,9 @@ describe('processExplosionModifier Tests', () => {
 	});
 
 	it('Compounding unmodified explosion', () => {
-		const iterator = new parser.DiceStringIterator('!!');
+		const iterator = new DiceStringIterator('!!');
 		const roll = new ParserObjects.DiceRoll(1, 6);
-		const result = parser.ProcessFunctions.processExplosionModifier(iterator, roll);
+		const result = ProcessFunctions.processExplosionModifier(iterator, roll);
 
 		assert.equal(result instanceof ParserObjects.DiceExplosionCompounding, true);
 		assert.equal(!result.condition, true);
@@ -620,9 +622,9 @@ describe('processExplosionModifier Tests', () => {
 	});
 
 	it('Compounding explosion with condition', () => {
-		const iterator = new parser.DiceStringIterator('!!5');
+		const iterator = new DiceStringIterator('!!5');
 		const roll = new ParserObjects.DiceRoll(1, 6);
-		const result = parser.ProcessFunctions.processExplosionModifier(iterator, roll);
+		const result = ProcessFunctions.processExplosionModifier(iterator, roll);
 
 		assert.equal(result instanceof ParserObjects.DiceExplosionCompounding, true);
 		assert.equal(result.condition(5), true);
@@ -630,9 +632,9 @@ describe('processExplosionModifier Tests', () => {
 	});
 
 	it('Penetrating unmodified explosion', () => {
-		const iterator = new parser.DiceStringIterator('!p');
+		const iterator = new DiceStringIterator('!p');
 		const roll = new ParserObjects.DiceRoll(1, 6);
-		const result = parser.ProcessFunctions.processExplosionModifier(iterator, roll);
+		const result = ProcessFunctions.processExplosionModifier(iterator, roll);
 
 		assert.equal(result instanceof ParserObjects.DiceExplosionPenetrating, true);
 		assert.equal(!result.condition, true);
@@ -640,9 +642,9 @@ describe('processExplosionModifier Tests', () => {
 	});
 
 	it('Penetrating explosion with condition', () => {
-		const iterator = new parser.DiceStringIterator('!p5');
+		const iterator = new DiceStringIterator('!p5');
 		const roll = new ParserObjects.DiceRoll(1, 6);
-		const result = parser.ProcessFunctions.processExplosionModifier(iterator, roll);
+		const result = ProcessFunctions.processExplosionModifier(iterator, roll);
 
 		assert.equal(result instanceof ParserObjects.DiceExplosionPenetrating, true);
 		assert.equal(result.condition(5), true);
@@ -652,21 +654,21 @@ describe('processExplosionModifier Tests', () => {
 
 describe('processRollModifier Tests', () => {
 	it('Empty iterator returns same dice roll', () => {
-		const iterator = new parser.DiceStringIterator('');
+		const iterator = new DiceStringIterator('');
 		const originalRoll = new ParserObjects.DiceRoll(1, 6);
-		const newRoll = parser.ProcessFunctions.processRollModifier(iterator, originalRoll);
+		const newRoll = ProcessFunctions.processRollModifier(iterator, originalRoll);
 
 		assert.deepStrictEqual(newRoll, originalRoll);
 	});
 
 	it('processExplosionModifier called', () => {
-		const iterator = new parser.DiceStringIterator('!');
+		const iterator = new DiceStringIterator('!');
 		const originalRoll = new ParserObjects.DiceRoll(1, 6);
 
-		const spy = sinon.spy(parser.ProcessFunctions, 'processExplosionModifier');
+		const spy = sinon.spy(ProcessFunctions, 'processExplosionModifier');
 		let newRoll;
 		try {
-			newRoll = parser.ProcessFunctions.processRollModifier(iterator, originalRoll);
+			newRoll = ProcessFunctions.processRollModifier(iterator, originalRoll);
 		}
 		finally {
 			spy.restore();
@@ -680,13 +682,13 @@ describe('processRollModifier Tests', () => {
 	});
 
 	it('processRerollModifier called', () => {
-		const iterator = new parser.DiceStringIterator('r5');
+		const iterator = new DiceStringIterator('r5');
 		const originalRoll = new ParserObjects.DiceRoll(1, 6);
 
-		const spy = sinon.spy(parser.ProcessFunctions, 'processRerollModifier');
+		const spy = sinon.spy(ProcessFunctions, 'processRerollModifier');
 		let newRoll;
 		try {
-			newRoll = parser.ProcessFunctions.processRollModifier(iterator, originalRoll);
+			newRoll = ProcessFunctions.processRollModifier(iterator, originalRoll);
 		}
 		finally {
 			spy.restore();
@@ -701,13 +703,13 @@ describe('processRollModifier Tests', () => {
 	});
 
 	it('processKeepDropModifier with keep called', () => {
-		const iterator = new parser.DiceStringIterator('k5');
+		const iterator = new DiceStringIterator('k5');
 		const originalRoll = new ParserObjects.DiceRoll(1, 6);
 
-		const spy = sinon.spy(parser.ProcessFunctions, 'processKeepDropModifier');
+		const spy = sinon.spy(ProcessFunctions, 'processKeepDropModifier');
 		let newRoll;
 		try {
-			newRoll = parser.ProcessFunctions.processRollModifier(iterator, originalRoll);
+			newRoll = ProcessFunctions.processRollModifier(iterator, originalRoll);
 		}
 		finally {
 			spy.restore();
@@ -722,13 +724,13 @@ describe('processRollModifier Tests', () => {
 	});
 
 	it('processKeepDropModifier with drop called', () => {
-		const iterator = new parser.DiceStringIterator('dl');
+		const iterator = new DiceStringIterator('dl');
 		const originalRoll = new ParserObjects.DiceRoll(1, 6);
 
-		const spy = sinon.spy(parser.ProcessFunctions, 'processKeepDropModifier');
+		const spy = sinon.spy(ProcessFunctions, 'processKeepDropModifier');
 		let newRoll;
 		try {
-			newRoll = parser.ProcessFunctions.processRollModifier(iterator, originalRoll);
+			newRoll = ProcessFunctions.processRollModifier(iterator, originalRoll);
 		}
 		finally {
 			spy.restore();
@@ -747,32 +749,32 @@ describe('processRollModifier Tests', () => {
 describe('processNumberOrDice Tests', () => {
 	it('Empty iterator throws error', () => {
 		assert.throws(() => {
-			parser.ProcessFunctions.processNumberOrDice('');
+			ProcessFunctions.processNumberOrDice('');
 		});
 	});
 
 	it('Invalid character throws error', () => {
 		assert.throws(() => {
-			parser.ProcessFunctions.processNumberOrDice('a');
+			ProcessFunctions.processNumberOrDice('a');
 		});
 	});
 
 	it('Integer string', () => {
-		const result = parser.ProcessFunctions.processNumberOrDice('51');
+		const result = ProcessFunctions.processNumberOrDice('51');
 
 		assert.equal(result instanceof ParserObjects.StaticNumber, true);
 		assert.equal(result.value, 51);
 	});
 
 	it('Float string', () => {
-		const result = parser.ProcessFunctions.processNumberOrDice('51.15');
+		const result = ProcessFunctions.processNumberOrDice('51.15');
 
 		assert.equal(result instanceof ParserObjects.StaticNumber, true);
 		assert.equal(result.value, 51.15);
 	});
 
 	it('Unnumbered dice string', () => {
-		const result = parser.ProcessFunctions.processNumberOrDice('d51');
+		const result = ProcessFunctions.processNumberOrDice('d51');
 
 		assert.equal(result instanceof ParserObjects.DiceRoll, true);
 		assert.equal(result.numDice, 1);
@@ -780,7 +782,7 @@ describe('processNumberOrDice Tests', () => {
 	});
 
 	it('Numbered dice string', () => {
-		const result = parser.ProcessFunctions.processNumberOrDice('6d51');
+		const result = ProcessFunctions.processNumberOrDice('6d51');
 
 		assert.equal(result instanceof ParserObjects.DiceRoll, true);
 		assert.equal(result.numDice, 6);
@@ -788,14 +790,14 @@ describe('processNumberOrDice Tests', () => {
 	});
 
 	it('Explosion dice string', () => {
-		const result = parser.ProcessFunctions.processNumberOrDice('6d51!');
+		const result = ProcessFunctions.processNumberOrDice('6d51!');
 
 		assert.equal(result instanceof ParserObjects.DiceExplosionRegular, true);
 		assert.equal(result.child instanceof ParserObjects.DiceRoll, true);
 	});
 
 	it('Triple ! produces correct explosion chain', () => {
-		const result = parser.ProcessFunctions.processNumberOrDice('6d51!!!');
+		const result = ProcessFunctions.processNumberOrDice('6d51!!!');
 
 		assert.equal(result instanceof ParserObjects.DiceExplosionCompounding, true);
 		assert.equal(result.child instanceof ParserObjects.DiceExplosionRegular, true);
@@ -803,28 +805,28 @@ describe('processNumberOrDice Tests', () => {
 	});
 
 	it('Reroll dice string', () => {
-		const result = parser.ProcessFunctions.processNumberOrDice('6d51r5');
+		const result = ProcessFunctions.processNumberOrDice('6d51r5');
 
 		assert.equal(result instanceof ParserObjects.ReRoll, true);
 		assert.equal(result.child instanceof ParserObjects.DiceRoll, true);
 	});
 
 	it('Conditional keep dice string', () => {
-		const result = parser.ProcessFunctions.processNumberOrDice('6d51k5');
+		const result = ProcessFunctions.processNumberOrDice('6d51k5');
 
 		assert.equal(result instanceof ParserObjects.KeepDropConditional, true);
 		assert.equal(result.child instanceof ParserObjects.DiceRoll, true);
 	});
 
 	it('Ordered drop dice string', () => {
-		const result = parser.ProcessFunctions.processNumberOrDice('6d51dh5');
+		const result = ProcessFunctions.processNumberOrDice('6d51dh5');
 
 		assert.equal(result instanceof ParserObjects.KeepDropHighLow, true);
 		assert.equal(result.child instanceof ParserObjects.DiceRoll, true);
 	});
 
 	it('Modifier chain in the correct order', () => {
-		const result = parser.ProcessFunctions.processNumberOrDice('6d51dh5!r<2k3!p=24!!>62');
+		const result = ProcessFunctions.processNumberOrDice('6d51dh5!r<2k3!p=24!!>62');
 
 		assert.equal(result instanceof ParserObjects.KeepDropHighLow, true);
 		assert.equal(result.child instanceof ParserObjects.DiceExplosionRegular, true);
@@ -836,7 +838,7 @@ describe('processNumberOrDice Tests', () => {
 	});
 
 	it('Regular match modifier', () => {
-		const result = parser.ProcessFunctions.processNumberOrDice('6d51dh5m');
+		const result = ProcessFunctions.processNumberOrDice('6d51dh5m');
 
 		assert.equal(result instanceof ParserObjects.NumberMatcher, true);
 		assert.equal(!result.resolveToMatchCount, true);
@@ -845,7 +847,7 @@ describe('processNumberOrDice Tests', () => {
 	});
 
 	it('Regular match modifier that returns count', () => {
-		const result = parser.ProcessFunctions.processNumberOrDice('6d51mt');
+		const result = ProcessFunctions.processNumberOrDice('6d51mt');
 
 		assert.equal(result instanceof ParserObjects.NumberMatcher, true);
 		assert.equal(result.resolveToMatchCount, true);
@@ -853,7 +855,7 @@ describe('processNumberOrDice Tests', () => {
 	});
 
 	it('Success count', () => {
-		const result = parser.ProcessFunctions.processNumberOrDice('6d51=3');
+		const result = ProcessFunctions.processNumberOrDice('6d51=3');
 
 		assert.equal(result instanceof ParserObjects.SuccessFailCounter, true);
 		assert.equal(result.successFunc(3), true);
@@ -863,7 +865,7 @@ describe('processNumberOrDice Tests', () => {
 	});
 
 	it('Success & failure count', () => {
-		const result = parser.ProcessFunctions.processNumberOrDice('6d51kh4>4f<2');
+		const result = ProcessFunctions.processNumberOrDice('6d51kh4>4f<2');
 
 		assert.equal(result instanceof ParserObjects.SuccessFailCounter, true);
 		assert.equal(result.successFunc(5), true);
@@ -875,381 +877,31 @@ describe('processNumberOrDice Tests', () => {
 	});
 });
 
-describe('carveMathString Tests', () => {
-	it('Empty string gives empty response', () => {
-		const result = parser.carveMathString('');
-		assert.equal(result, '');
-	});
-
-	it('String without operators returns same string', () => {
-		const result = parser.carveMathString('abc123');
-		assert.equal(result, 'abc123');
-	});
-
-	it('String with only "+" returns math object dividing empty strings', () => {
-		const result = parser.carveMathString('+');
-		assert.equal(result instanceof parser.MathFunction, true);
-		assert.equal(result.symbol, '+');
-		assert.equal(result.left, '');
-		assert.equal(result.right, '');
-	});
-
-	it('String with only "-" returns math object dividing empty strings', () => {
-		const result = parser.carveMathString('-', true);
-		assert.equal(result instanceof parser.MathFunction, true);
-		assert.equal(result.symbol, '-');
-		assert.equal(result.left, '');
-		assert.equal(result.right, '');
-	});
-
-	it('String with only "*" returns math object dividing empty strings', () => {
-		const result = parser.carveMathString('*');
-		assert.equal(result instanceof parser.MathFunction, true);
-		assert.equal(result.symbol, '*');
-		assert.equal(result.left, '');
-		assert.equal(result.right, '');
-	});
-
-	it('String with only "/" returns math object dividing empty strings', () => {
-		const result = parser.carveMathString('/');
-		assert.equal(result instanceof parser.MathFunction, true);
-		assert.equal(result.symbol, '/');
-		assert.equal(result.left, '');
-		assert.equal(result.right, '');
-	});
-
-	it('String with only "%" returns math object dividing empty strings', () => {
-		const result = parser.carveMathString('%');
-		assert.equal(result instanceof parser.MathFunction, true);
-		assert.equal(result.symbol, '%');
-		assert.equal(result.left, '');
-		assert.equal(result.right, '');
-	});
-
-	it('String with only "^" returns math object dividing empty strings', () => {
-		const result = parser.carveMathString('^');
-		assert.equal(result instanceof parser.MathFunction, true);
-		assert.equal(result.symbol, '^');
-		assert.equal(result.left, '');
-		assert.equal(result.right, '');
-	});
-
-	it('String with one "+" returns strings on either side', () => {
-		const result = parser.carveMathString('123abc+123abc');
-		assert.equal(result instanceof parser.MathFunction, true);
-		assert.equal(result.symbol, '+');
-		assert.equal(result.left, '123abc');
-		assert.equal(result.right, '123abc');
-	});
-
-
-	it('String with multiple "+" returns chain of math functions', () => {
-		const result = parser.carveMathString('a+b+c');
-		assert.equal(result instanceof parser.MathFunction, true);
-		assert.equal(result.symbol, '+');
-		assert.equal(result.right, 'c');
-		assert.equal(result.left instanceof parser.MathFunction, true);
-		assert.equal(result.left.symbol, '+');
-		assert.equal(result.left.left, 'a');
-		assert.equal(result.left.right, 'b');
-	});
-
-	it('String with multiple "^" returns chain folded in opposite direction', () => {
-		const result = parser.carveMathString('a^b^c');
-		assert.equal(result instanceof parser.MathFunction, true);
-		assert.equal(result.symbol, '^');
-		assert.equal(result.left, 'a');
-		assert.equal(result.right instanceof parser.MathFunction, true);
-		assert.equal(result.right.symbol, '^');
-		assert.equal(result.right.left, 'b');
-		assert.equal(result.right.right, 'c');
-	});
-
-	it('Layered operators parse in correct order', () => {
-		const result = parser.carveMathString('5^6*3+2');
-		assert.equal(result instanceof parser.MathFunction, true);
-		assert.equal(result.symbol, '+');
-		assert.equal(result.right, '2');
-		assert.equal(result.left instanceof parser.MathFunction, true);
-		assert.equal(result.left.symbol, '*');
-		assert.equal(result.left.right, '3');
-		assert.equal(result.left.left instanceof parser.MathFunction, true);
-		assert.equal(result.left.left.symbol, '^');
-		assert.equal(result.left.left.right, '6');
-		assert.equal(result.left.left.left, '5');
-	});
-
-	it('Simple negative number', () => {
-		const result = parser.carveMathString('-4');
-		assert.equal(result, '-4');
-	});
-
-	it('Multiply negative number', () => {
-		const result = parser.carveMathString('-4*5');
-		assert.equal(result instanceof parser.MathFunction, true);
-		assert.equal(result.symbol, '*');
-		assert.equal(result.left, '-4');
-		assert.equal(result.right, '5');
-	});
-
-	it('Multiply by negative number', () => {
-		const result = parser.carveMathString('5*-4');
-		assert.equal(result instanceof parser.MathFunction, true);
-		assert.equal(result.symbol, '*');
-		assert.equal(result.left, '5');
-		assert.equal(result.right, '-4');
-	});
-
-	it('Negative number minus negative number', () => {
-		const result = parser.carveMathString('-5--4');
-		assert.equal(result instanceof parser.MathFunction, true);
-		assert.equal(result.symbol, '-');
-		assert.equal(result.left, '-5');
-		assert.equal(result.right, '-4');
-	});
-});
-
-describe('carveDiceStringByBrackets Tests', () => {
-	it('Empty string produces empty bracket object', () => {
-		const iterator = new parser.DiceStringIterator('');
-		const result = parser.CarvingFunctions.carveDiceStringByBrackets(iterator);
-
-		assert.equal(!result, true);
-	});
-
-	it('Single open bracket causes error', () => {
-		const iterator = new parser.DiceStringIterator('(');
-		assert.throws(() => {
-			parser.CarvingFunctions.carveDiceStringByBrackets(iterator);
-		});
-	});
-
-	it('Single close bracket causes error', () => {
-		const iterator = new parser.DiceStringIterator(')');
-		assert.throws(() => {
-			parser.CarvingFunctions.carveDiceStringByBrackets(iterator);
-		});
-	});
-
-	it('Simple bracket pair produces empty bracket inside bracket', () => {
-		const iterator = new parser.DiceStringIterator('()');
-		const result = parser.CarvingFunctions.carveDiceStringByBrackets(iterator);
-
-		assert.equal(result instanceof parser.Brackets, true);
-		assert.equal(result.elements.length, 0);
-		assert.equal(!result.functionName, true);
-		assert.equal(result.modifierSuffix, '');
-		assert.equal(!result.isList, true);
-		assert.equal(result.terminatingChar, ')');
-	});
-
-	it('Simple empty list', () => {
-		const iterator = new parser.DiceStringIterator('{}');
-		const result = parser.CarvingFunctions.carveDiceStringByBrackets(iterator);
-
-		assert.equal(result instanceof parser.Brackets, true);
-		assert.equal(result.elements.length, 0);
-		assert.equal(!result.functionName, true);
-		assert.equal(result.modifierSuffix, '');
-		assert.equal(result.isList, true);
-		assert.equal(!result.terminatingChar, true);
-	});
-
-	it('Simple list with 2 empty entries does not get entries', () => {
-		const iterator = new parser.DiceStringIterator('{,}');
-		const result = parser.CarvingFunctions.carveDiceStringByBrackets(iterator);
-
-		assert.equal(result instanceof parser.Brackets, true);
-		assert.equal(result.elements.length, 0);
-		assert.equal(!result.functionName, true);
-		assert.equal(result.modifierSuffix, '');
-		assert.equal(result.isList, true);
-		assert.equal(!result.terminatingChar, true);
-	});
-
-	it('Simple list with 2 entries', () => {
-		const iterator = new parser.DiceStringIterator('{a,b}');
-		const result = parser.CarvingFunctions.carveDiceStringByBrackets(iterator);
-
-		assert.equal(result instanceof parser.Brackets, true);
-		assert.equal(result.elements.length, 2);
-		assert.equal(result.elements[0].elements[0], 'a');
-		assert.equal(result.elements[1].elements[0], 'b');
-		assert.equal(!result.functionName, true);
-		assert.equal(result.modifierSuffix, '');
-		assert.equal(result.isList, true);
-		assert.equal(!result.terminatingChar, true);
-	});
-
-	it('Basic math parsed', () => {
-		const iterator = new parser.DiceStringIterator('a+b');
-		const result = parser.CarvingFunctions.carveDiceStringByBrackets(iterator);
-
-		assert.equal(result instanceof parser.MathFunction, true);
-		assert.equal(result.left, 'a');
-		assert.equal(result.right, 'b');
-	});
-
-	it('Following brackets break math parsing order', () => {
-		const iterator = new parser.DiceStringIterator('a^(b+c)');
-		const result = parser.CarvingFunctions.carveDiceStringByBrackets(iterator);
-
-		assert.equal(result instanceof parser.MathFunction, true);
-		assert.equal(result.symbol, '^');
-		assert.equal(result.left, 'a');
-
-		assert.equal(result.right instanceof parser.Brackets, true);
-		assert.equal(result.right.elements.length, 1);
-		assert.equal(result.right.elements[0] instanceof parser.MathFunction, true);
-		assert.equal(result.right.elements[0].symbol, '+');
-		assert.equal(result.right.elements[0].left, 'b');
-		assert.equal(result.right.elements[0].right, 'c');
-	});
-
-	it('Leading brackets break math parsing order', () => {
-		const iterator = new parser.DiceStringIterator('(a+b)*c');
-		const result = parser.CarvingFunctions.carveDiceStringByBrackets(iterator);
-
-		assert.equal(result instanceof parser.MathFunction, true);
-		assert.equal(result.symbol, '*');
-		assert.equal(result.right, 'c');
-
-		assert.equal(result.left instanceof parser.Brackets, true);
-		assert.equal(result.left.elements.length, 1);
-		assert.equal(result.left.elements[0] instanceof parser.MathFunction, true);
-		assert.equal(result.left.elements[0].symbol, '+');
-		assert.equal(result.left.elements[0].left, 'a');
-		assert.equal(result.left.elements[0].right, 'b');
-	});
-
-	it('Single element list with mods', () => {
-		const iterator = new parser.DiceStringIterator('{5d6}>-1');
-		const result = parser.CarvingFunctions.carveDiceStringByBrackets(iterator);
-
-		assert.equal(result instanceof parser.Brackets, true);
-		assert.equal(result.isList, true);
-		assert.equal(result.modifierSuffix, '>-1');
-		assert.equal(result.elements.length, 1);
-
-		assert.equal(result.elements[0] instanceof parser.Brackets, true);
-		assert.equal(result.elements[0].elements[0], '5d6');
-	});
-
-	it('Multi element list with mods', () => {
-		const iterator = new parser.DiceStringIterator('{2d8,1d10,2d6}>7');
-		const result = parser.CarvingFunctions.carveDiceStringByBrackets(iterator);
-
-		assert.equal(result instanceof parser.Brackets, true);
-		assert.equal(result.isList, true);
-		assert.equal(result.modifierSuffix, '>7');
-		assert.equal(result.elements.length, 3);
-
-		assert.equal(result.elements[0] instanceof parser.Brackets, true);
-		assert.equal(result.elements[0].elements[0], '2d8');
-		assert.equal(result.elements[1] instanceof parser.Brackets, true);
-		assert.equal(result.elements[1].elements[0], '1d10');
-		assert.equal(result.elements[2] instanceof parser.Brackets, true);
-		assert.equal(result.elements[2].elements[0], '2d6');
-	});
-
-	it('Single element list with mods followed by minus', () => {
-		const iterator = new parser.DiceStringIterator('{5d6}>3-1');
-		const result = parser.CarvingFunctions.carveDiceStringByBrackets(iterator);
-
-		assert.equal(result instanceof parser.MathFunction, true);
-		assert.equal(result.symbol, '-');
-		assert.equal(result.right, '1');
-
-		assert.equal(result.left instanceof parser.Brackets, true);
-		assert.equal(result.left.isList, true);
-		assert.equal(result.left.modifierSuffix, '>3');
-		assert.equal(result.left.elements.length, 1);
-
-		assert.equal(result.left.elements[0] instanceof parser.Brackets, true);
-		assert.equal(result.left.elements[0].elements[0], '5d6');
-	});
-
-	it('Simple floor method', () => {
-		const iterator = new parser.DiceStringIterator('floor(-5.5)');
-		const result = parser.CarvingFunctions.carveDiceStringByBrackets(iterator);
-
-		assert.equal(result instanceof parser.Brackets, true);
-		assert.equal(!result.isList, true);
-		assert.equal(result.functionName, 'floor');
-		assert.equal(!result.modifierSuffix, true);
-		assert.equal(result.elements.length, 1);
-		assert.equal(result.elements[0], '-5.5');
-	});
-
-	it('Simple round method', () => {
-		const iterator = new parser.DiceStringIterator('round(-5.5)');
-		const result = parser.CarvingFunctions.carveDiceStringByBrackets(iterator);
-
-		assert.equal(result instanceof parser.Brackets, true);
-		assert.equal(!result.isList, true);
-		assert.equal(result.functionName, 'round');
-		assert.equal(!result.modifierSuffix, true);
-		assert.equal(result.elements.length, 1);
-		assert.equal(result.elements[0], '-5.5');
-	});
-
-	it('Simple ceil method', () => {
-		const iterator = new parser.DiceStringIterator('ceil(-5.5)');
-		const result = parser.CarvingFunctions.carveDiceStringByBrackets(iterator);
-
-		assert.equal(result instanceof parser.Brackets, true);
-		assert.equal(!result.isList, true);
-		assert.equal(result.functionName, 'ceil');
-		assert.equal(!result.modifierSuffix, true);
-		assert.equal(result.elements.length, 1);
-		assert.equal(result.elements[0], '-5.5');
-	});
-
-	it('Simple abs method', () => {
-		const iterator = new parser.DiceStringIterator('abs(-5.5)');
-		const result = parser.CarvingFunctions.carveDiceStringByBrackets(iterator);
-
-		assert.equal(result instanceof parser.Brackets, true);
-		assert.equal(!result.isList, true);
-		assert.equal(result.functionName, 'abs');
-		assert.equal(!result.modifierSuffix, true);
-		assert.equal(result.elements.length, 1);
-		assert.equal(result.elements[0], '-5.5');
-	});
-
-	it('Function using list brackets throws error', () => {
-		const iterator = new parser.DiceStringIterator('floor{-5.5}');
-		assert.throws(() => {
-			parser.CarvingFunctions.carveDiceStringByBrackets(iterator);
-		});
-	});
-});
-
 describe('processBrackets Tests', () => {
 	afterEach(() => {
 		sinon.restore();
 	});
 	it('List with success/fail modifiers', () => {
-		const brackets = new parser.Brackets(true);
+		const brackets = new Brackets(true);
 		brackets.modifierSuffix = '>7';
 		brackets.elements.push('2d8');
 		brackets.elements.push('1d20');
 		brackets.elements.push('2d6');
 
-		const result = parser.ProcessFunctions.processBrackets(brackets);
+		const result = ProcessFunctions.processBrackets(brackets);
 
 		assert.equal(result instanceof ParserObjects.SuccessFailCounter, true);
 		assert.equal(result.child instanceof ParserObjects.NumberList, true);
 	});
 
 	it('List with keep/drop modifiers', () => {
-		const brackets = new parser.Brackets(true);
+		const brackets = new Brackets(true);
 		brackets.modifierSuffix = 'kh';
 		brackets.elements.push('2d8');
 		brackets.elements.push('1d20');
 		brackets.elements.push('2d6');
 
-		const result = parser.ProcessFunctions.processBrackets(brackets);
+		const result = ProcessFunctions.processBrackets(brackets);
 
 		assert.equal(result instanceof ParserObjects.KeepDropHighLow, true);
 		assert.equal(result.child instanceof ParserObjects.NumberList, true);
@@ -1263,7 +915,7 @@ describe('ResolveDiceString Tests', () => {
 	it('Simple d10 roll', () => {
 		sinon.stub(Math, 'random').returns(0.5);
 		const tracker = new TestTracker();
-		const result = parser.ResolveDiceString('1d10', tracker);
+		const result = ResolveDiceString('1d10', tracker);
 
 		assert.equal(result.value, 6);
 		assert.equal(result.text, '[6]');
@@ -1273,7 +925,7 @@ describe('ResolveDiceString Tests', () => {
 	it('List drop lowest excludes lowest from result', () => {
 		setRollSequence([0.7, 0.4]);
 		const tracker = new TestTracker();
-		const result = parser.ResolveDiceString('{1d20+5,1d20+5}kh', tracker);
+		const result = ResolveDiceString('{1d20+5,1d20+5}kh', tracker);
 
 		assert.equal(result.value, 20);
 		assert.equal(result.text, '(([15] + 5) + ~~([9] + 5)~~)');
@@ -1283,7 +935,7 @@ describe('ResolveDiceString Tests', () => {
 	it('Nested math test', () => {
 		setRollSequence([0.7, 0.4]);
 		const tracker = new TestTracker();
-		const result = parser.ResolveDiceString('(1+3)*2+((7-3)/2)', tracker);
+		const result = ResolveDiceString('(1+3)*2+((7-3)/2)', tracker);
 
 		assert.equal(result.value, 10);
 		assert.equal(result.text, '(1 + 3) \\* 2 + ((7 - 3) / 2)');
@@ -1293,7 +945,7 @@ describe('ResolveDiceString Tests', () => {
 	it('Single list entry with modifier', () => {
 		setRollSequence([0.7, 0.1, 0.9]);
 		const tracker = new TestTracker();
-		const result = parser.ResolveDiceString('{2d20+1d10}>7', tracker);
+		const result = ResolveDiceString('{2d20+1d10}>7', tracker);
 
 		assert.equal(result.value, 2);
 		assert.equal(result.text, '(__[15]__ + [3] + __[10]__)');
@@ -1303,7 +955,7 @@ describe('ResolveDiceString Tests', () => {
 	it('Single list entry with modifier', () => {
 		setRollSequence([0.7, 0.6, 0.1]);
 		const tracker = new TestTracker();
-		const result = parser.ResolveDiceString('{3d20+5}>10', tracker);
+		const result = ResolveDiceString('{3d20+5}>10', tracker);
 
 		assert.equal(result.value, 1);
 		assert.equal(result.text, '(([15] + [13] + [3]) + 5)');
@@ -1313,7 +965,7 @@ describe('ResolveDiceString Tests', () => {
 	it('Discards within discards', () => {
 		setRollSequence([0.7, 0.1, 0.6, 0.5]);
 		const tracker = new TestTracker();
-		const result = parser.ResolveDiceString('{1d10ro>5,2d10}dl', tracker);
+		const result = ResolveDiceString('{1d10ro>5,2d10}dl', tracker);
 
 		assert.equal(result.value, 13);
 		assert.equal(result.text, '(~~([8] + [2])~~ + ([7] + [6]))');
@@ -1324,7 +976,7 @@ describe('ResolveDiceString Tests', () => {
 		const tracker = new TestTracker();
 		// This string looks innocent but it crates specific challenges
 		// for the math folding that can cause errors.
-		const result = parser.ResolveDiceString('1^(3-2)+3', tracker);
+		const result = ResolveDiceString('1^(3-2)+3', tracker);
 
 		assert.equal(result.value, 4);
 		assert.equal(result.text, '1 ^ (3 - 2) + 3');

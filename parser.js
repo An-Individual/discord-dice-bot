@@ -1,5 +1,9 @@
 const ParserObjects = require('./parser-objects');
-const { KeepDropType, FunctionNames, FunctionList, CharacterSets } = require('./parser.constants.js');
+const Errors = require('./parser.errors');
+const { DiceStringIterator } = require('./parser.iterator');
+const { KeepDropType, FunctionNames, CharacterSets } = require('./parser.constants');
+const { carveMathString, MathFunction } = require('./parser.carving.math');
+const { carveDiceString, Brackets } = require('./parser.carving');
 
 function ResolveDiceString(input, tracker) {
 	// Standardization ensures that the parser isn't
@@ -9,8 +13,7 @@ function ResolveDiceString(input, tracker) {
 	// Carve and fold the string into an intermediate hierarchy that will
 	// make transforming it into processing objects that execute in the
 	// correct order much easier.
-	const iterator = new DiceStringIterator(input);
-	const carvedHierarchy = CarvingFunctions.carveDiceStringByBrackets(iterator);
+	const carvedHierarchy = carveDiceString(input);
 
 	// Process the hiearchy we carved in the previous step into a set
 	// of objects that can actually execute the string.
@@ -23,327 +26,6 @@ function ResolveDiceString(input, tracker) {
 	result = ParserObjects.resolveToNumber(result);
 
 	return result;
-}
-
-class CarvingFunctions {
-	static carveDiceStringByBrackets(iterator, isList, requiredTerminationChars) {
-		const result = new Brackets(isList);
-
-		if (isList) {
-			let entry;
-			do {
-				entry = this.carveDiceStringByBrackets(iterator, false, '},');
-				if (entry.elements.length > 0) {
-					result.elements.push(entry);
-				}
-				throwIfDone(!entry.terminatingChar);
-				if (entry.terminatingChar !== ',' && entry.terminatingChar !== '}') {
-					throwUnexpectedChar(entry.terminatingChar);
-				}
-			} while (entry.terminatingChar !== '}');
-
-			return result;
-		}
-
-		const terminatingChars = ')},';
-		let currentChar;
-		let currentElementTxt = '';
-		do {
-			currentChar = iterator.next();
-			if (currentChar.done || terminatingChars.indexOf(currentChar.value) >= 0) {
-				break;
-			}
-
-			if (currentChar.value === '(' || currentChar.value === '{') {
-				let funcTxt;
-				if (currentChar.value === '(') {
-					funcTxt = this.checkForFunction(currentElementTxt);
-					if (funcTxt) {
-						currentElementTxt = currentElementTxt.slice(0, -1 * funcTxt.length);
-					}
-				}
-
-				if (currentElementTxt) {
-					result.elements.push(carveMathString(currentElementTxt, result.elements.length > 0));
-					currentElementTxt = '';
-				}
-
-				const childIsList = currentChar.value === '{';
-				const bracketContent = this.carveDiceStringByBrackets(iterator, childIsList, childIsList ? '}' : ')');
-				bracketContent.functionName = funcTxt;
-
-				if (bracketContent.isList) {
-					bracketContent.modifierSuffix = this.readListModifierCharacters(iterator);
-				}
-
-				result.elements.push(bracketContent);
-			}
-			else {
-				currentElementTxt += currentChar.value;
-			}
-		} while (!currentChar.done);
-
-		result.terminatingChar = currentChar.value;
-
-		if (requiredTerminationChars && requiredTerminationChars.indexOf(result.terminatingChar) < 0) {
-			throw new Error('Bracket not closed.');
-		}
-		else if (!requiredTerminationChars && result.terminatingChar) {
-			// If we aren't requiring terminating characters but we hit one
-			// then there's a close without a matching opening so we fail.
-			throw new Error('Unexpected open bracket or comma');
-		}
-
-		if (currentElementTxt) {
-			result.elements.push(carveMathString(currentElementTxt, result.elements.length > 0));
-		}
-
-		result.elements = this.foldAdjacentObjectsIntoMathFuncs(result.elements);
-
-		if (result.elements.length > 1) {
-			throw new Error('Unknown syntax error');
-		}
-
-		// If this is the root carve then return the element instead
-		// of the bracket object to cut down on bracket clutter.
-		if (!requiredTerminationChars) {
-			return result.elements[0];
-		}
-
-		return result;
-	}
-
-	static checkForFunction(elementTxt) {
-		for (let i = 0; i < FunctionList.length; i++) {
-			if (elementTxt.endsWith(FunctionList[i])) {
-				return FunctionList[i];
-			}
-		}
-
-		return '';
-	}
-
-	static readListModifierCharacters(iterator) {
-		let result = '';
-		let currentChar = iterator.peek();
-		while (!currentChar.done && CharacterSets.SetModifierCharacters.indexOf(currentChar.value) >= 0) {
-			// Negative integers are only permitted after a letter or compare
-			// character, otherwise it actual denotes a separate math function.
-			if (currentChar.value === '-') {
-				if (!result || (CharacterSets.ComparePointOperators.indexOf(result[result.length - 1]) < 0 && CharacterSets.Letters.indexOf(result[result.length - 1]) < 0)) {
-					break;
-				}
-			}
-
-			result += currentChar.value;
-			iterator.next();
-			currentChar = iterator.peek();
-		}
-
-		return result;
-	}
-
-	static foldAdjacentObjectsIntoMathFuncs(elements) {
-		const result = [];
-
-		for (let i = 0; i < elements.length; i++) {
-			if (i === 0) {
-				result.push(elements[i]);
-				continue;
-			}
-
-			let mathInvolved = false;
-			let emptyRight;
-			if (result[result.length - 1] instanceof MathFunction) {
-				mathInvolved = true;
-				emptyRight = this.getMathFuncWithEmptyRightSlot(result[result.length - 1]);
-			}
-
-			let emptyLeft;
-			if (elements[i] instanceof MathFunction) {
-				mathInvolved = true;
-				emptyLeft = this.getMathFuncWithEmptyLeftSlot(elements[i]);
-			}
-
-			if (mathInvolved) {
-				if (emptyRight && !emptyLeft) {
-					emptyRight.right = elements[i];
-				}
-				else if (!emptyRight && emptyLeft) {
-					emptyLeft.left = result.pop();
-					result.push(elements[i]);
-				}
-				else {
-					// Either we have 2 math functions both looking to consume
-					// their neighbor or 2 unlinked math functions, both of which
-					// imply a syntax issue of some kind.
-					throw new Error('Math syntax error');
-				}
-			}
-			else {
-				result.push(elements[i]);
-			}
-		}
-
-		return result;
-	}
-
-	static getMathFuncWithEmptyLeftSlot(func) {
-		if (func instanceof MathFunction && !func.left) {
-			return func;
-		}
-
-		if (func.left instanceof MathFunction) {
-			const leftCheck = this.getMathFuncWithEmptyLeftSlot(func.left);
-			if (leftCheck) {
-				return leftCheck;
-			}
-		}
-
-		if (func.right instanceof MathFunction) {
-			const rightCheck = this.getMathFuncWithEmptyLeftSlot(func.right);
-			if (rightCheck) {
-				return rightCheck;
-			}
-		}
-
-		return;
-	}
-
-	static getMathFuncWithEmptyRightSlot(func) {
-		if (!func.right) {
-			return func;
-		}
-
-		if (func.right instanceof MathFunction) {
-			const rightCheck = this.getMathFuncWithEmptyRightSlot(func.right);
-			if (rightCheck) {
-				return rightCheck;
-			}
-		}
-
-		if (func.left instanceof MathFunction) {
-			const leftCheck = this.getMathFuncWithEmptyRightSlot(func.left);
-			if (leftCheck) {
-				return leftCheck;
-			}
-		}
-
-		return;
-	}
-}
-
-function carveMathString(text, beforeBracket) {
-	return carveMathByCharacters(text, '+-', carveMathMultDivMod, (idx) => {
-		if (text[idx] !== '-') {
-			return false;
-		}
-
-		if (idx === 0) {
-			// If we're aren't before a bracket ignore it, otherwise this
-			// is an operator on the contents of the bracket.
-			// We only want to do this during the first split, any sub splits
-			// will occur immediately after math characters at index 0.
-			if (beforeBracket) {
-				return false;
-			}
-			return true;
-		}
-
-		return CharacterSets.MathOperators.indexOf(text[idx - 1]) >= 0;
-	});
-}
-
-function carveMathMultDivMod(text) {
-	return carveMathByCharacters(text, '*/%', carveMathExponentiation);
-}
-
-function carveMathExponentiation(text) {
-	if (!text) {
-		return text;
-	}
-
-	const idx = text.indexOf('^');
-	if (idx < 0) {
-		return text;
-	}
-
-	const leftSide = idx === 0 ? '' : text.substring(0, idx);
-	const rightSide = idx + 1 >= text.length ? '' : text.substr(idx + 1);
-
-	return new MathFunction('^', leftSide, carveMathExponentiation(rightSide));
-}
-
-function carveMathByCharacters(text, splitterCharacters, subSplitFunc, ignoreFunc) {
-	const dividedTxt = splitStringOnCharacters(text, splitterCharacters, ignoreFunc);
-
-	if (dividedTxt.length === 0) {
-		return text;
-	}
-
-	let startIdx = 0;
-	let result = '';
-	if (splitterCharacters.indexOf(dividedTxt[0]) < 0) {
-		startIdx = 1;
-		result = !subSplitFunc ? dividedTxt[0] : subSplitFunc(dividedTxt[0]);
-	}
-
-	for (let i = startIdx; i < dividedTxt.length; i++) {
-		if (splitterCharacters.indexOf(dividedTxt[i]) < 0) {
-			throw new Error('Math syntax error.');
-		}
-
-		const operator = dividedTxt[i];
-		let rightSide = '';
-		i++;
-		if (i < dividedTxt.length) {
-			rightSide = !subSplitFunc ? dividedTxt[i] : subSplitFunc(dividedTxt[i]);
-		}
-
-		result = new MathFunction(operator, result, rightSide);
-	}
-
-	return result;
-}
-
-function splitStringOnCharacters(text, splitterCharacters, ignoreFunc) {
-	const result = [];
-
-	let startIdx = 0;
-	for (let i = 0; i < text.length; i++) {
-		if (splitterCharacters.indexOf(text[i]) >= 0 && (!ignoreFunc || !ignoreFunc(i))) {
-			const leftSide = text.substring(startIdx, i);
-			if (leftSide) {
-				result.push(leftSide);
-			}
-
-			result.push(text[i]);
-			startIdx = i + 1;
-		}
-	}
-
-	if (startIdx < text.length) {
-		result.push(text.substr(startIdx));
-	}
-
-	return result;
-}
-
-class Brackets {
-	constructor(isList) {
-		this.elements = [];
-		this.isList = isList;
-		this.functionName = '';
-		this.modifierSuffix = '';
-	}
-}
-
-class MathFunction {
-	constructor(symbol, left, right) {
-		this.symbol = symbol;
-		this.left = left;
-		this.right = right;
-	}
 }
 
 class ProcessFunctions {
@@ -404,13 +86,13 @@ class ProcessFunctions {
 
 		object = this.processListResolver(iterator, object);
 		if (iterator.index >= 0) {
-			throwIfNotDone(iterator.peek());
+			Errors.throwIfNotDone(iterator.peek());
 			return object;
 		}
 
 		if (current.value === 'd' || current.value === 'k') {
 			object = this.processKeepDropModifier(iterator, object);
-			throwIfNotDone(iterator.peek());
+			Errors.throwIfNotDone(iterator.peek());
 			return object;
 		}
 
@@ -442,7 +124,7 @@ class ProcessFunctions {
 	static processNumberOrDice(text) {
 		const iterator = new DiceStringIterator(text);
 		let current = iterator.peek();
-		throwIfDone(current.done);
+		Errors.throwIfDone(current.done);
 
 		let num;
 		if (current.value !== 'd') {
@@ -459,7 +141,7 @@ class ProcessFunctions {
 			const decimals = this.processInt(iterator);
 			const val = parseFloat(`${num}.${decimals}`);
 
-			throwIfNotDone(iterator.next());
+			Errors.throwIfNotDone(iterator.next());
 			return new ParserObjects.StaticNumber(val);
 		}
 
@@ -490,19 +172,19 @@ class ProcessFunctions {
 
 			outerDice = this.processListResolver(iterator, outerDice);
 
-			throwIfNotDone(iterator.next());
+			Errors.throwIfNotDone(iterator.next());
 			return outerDice;
 		}
 
 		// Otherwise it's just an integer
-		throwIfNotDone(iterator.next());
+		Errors.throwIfNotDone(iterator.next());
 		return new ParserObjects.StaticNumber(num);
 	}
 
 	static processSimpleDiceString(iterator, numDice) {
 		let current = iterator.next();
 
-		throwIfDone(current.done);
+		Errors.throwIfDone(current.done);
 		if (current.value != 'd') {
 			throw new Error(`Expected character 'd' at position ${iterator.index}`);
 		}
@@ -523,8 +205,8 @@ class ProcessFunctions {
 			return new ParserObjects.DiceRoll(numDice, 1, -1);
 		}
 
-		throwIfDone(current.done);
-		throwUnexpectedChar(current.value);
+		Errors.throwIfDone(current.done);
+		Errors.throwUnexpectedChar(current.value);
 	}
 
 	static processRollModifier(iterator, diceRoll) {
@@ -703,7 +385,7 @@ class ProcessFunctions {
 		let str = '';
 		let peek = iterator.peek();
 
-		throwIfDone(peek.done);
+		Errors.throwIfDone(peek.done);
 		if (!isIntChar(peek.value)) {
 			throw new Error(`Unexpected character "${peek.value}" encountered parsing integer`);
 		}
@@ -751,22 +433,6 @@ class ProcessFunctions {
 	}
 }
 
-function throwIfDone(done) {
-	if (done) {
-		throw new Error('Unexpected end of dice string');
-	}
-}
-
-function throwIfNotDone(iteratorLocation) {
-	if (!iteratorLocation.done) {
-		throw new Error(`Unexpected character "${iteratorLocation.value}"`);
-	}
-}
-
-function throwUnexpectedChar(char) {
-	throw new Error(`Encountered unexpected character '${char}'`);
-}
-
 function isIntChar(c) {
 	return c !== undefined && (c === '-' || CharacterSets.Numbers.indexOf(c) >= 0);
 }
@@ -776,48 +442,12 @@ function standardizeDiceString(str) {
 	return str.replace(/\s+/g, '').toLowerCase();
 }
 
-const DiceStringIterator = class {
-	constructor(text) {
-		this.txt = text;
-		this.index = -1;
-	}
-
-	next() {
-		this.index++;
-		if (!this.txt || this.txt.length <= this.index) {
-			return {
-				done: true,
-			};
-		}
-		else {
-			return {
-				value: this.txt[this.index],
-			};
-		}
-	}
-
-	peek() {
-		if (!this.txt || this.txt.length <= this.index + 1) {
-			return {
-				done: true,
-			};
-		}
-		else {
-			return {
-				value: this.txt[this.index + 1],
-			};
-		}
-	}
-};
-
 module.exports = {
 	ResolveDiceString,
 	standardizeDiceString,
 	DiceStringIterator,
 	isIntChar,
-	CarvingFunctions,
 	ProcessFunctions,
 	carveMathString,
 	MathFunction,
-	Brackets,
 };
