@@ -1,5 +1,6 @@
 const Errors = require('./parser.errors');
-const ParserObjects = require('./parser-objects');
+const ParserObjects = require('./parser.resolution.objects');
+const { ParserResolveTypes } = require('./parser.constants');
 const { DiceStringIterator } = require('./parser.iterator');
 const { FunctionNames } = require('./parser.constants');
 const { MathFunction } = require('./parser.carving.math');
@@ -34,7 +35,7 @@ function processBrackets(brackets) {
 	}
 
 	if (brackets.isList) {
-		if (entries.length === 1 && entries[0].getResolveType() === ParserObjects.ParserResolveTypes.DICE_ROLL) {
+		if (entries.length === 1 && entries[0].getResolveType() === ParserResolveTypes.DICE_ROLL) {
 			return processBracketsModifiers(entries[0], brackets.modifierSuffix);
 		}
 

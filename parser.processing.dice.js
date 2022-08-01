@@ -1,5 +1,5 @@
 const Errors = require('./parser.errors');
-const ParserObjects = require('./parser-objects');
+const ParserObjects = require('./parser.resolution.objects');
 const { KeepDropType, CharacterSets } = require('./parser.constants');
 const { processInt, isIntChar } = require('./parser.processing.numbers');
 const { processModifierComparePoint, isModifierComparePointChar } = require('./parser.processing.comparepoints');

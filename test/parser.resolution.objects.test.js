@@ -1,6 +1,7 @@
 /* eslint-disable no-undef */
 const assert = require('assert');
-const ParserObjects = require('../parser-objects');
+const { ParserResolveTypes, ResolvedNumberType } = require('../parser.constants');
+const ParserObjects = require('../parser.resolution.objects');
 const DiceFunctions = require('../dice-functions');
 const sinon = require('sinon');
 
@@ -871,7 +872,7 @@ describe('NumberMatcher Tests', () => {
 		const result = matcher.resolve(tracker);
 		assert.equal(tracker.count, 0);
 		assert.equal(result.value, 23);
-		assert.equal(result.type, ParserObjects.ResolvedNumberType.UNTYPED);
+		assert.equal(result.type, ResolvedNumberType.UNTYPED);
 		assert.equal(result.text, '(1 + 1 + 1 + 5 + 5 + 7 + 3 + ~~5~~)');
 	});
 
@@ -885,7 +886,7 @@ describe('NumberMatcher Tests', () => {
 		const result = matcher.resolve(tracker);
 		assert.equal(tracker.count, 8);
 		assert.equal(result.value, 23);
-		assert.equal(result.type, ParserObjects.ResolvedNumberType.UNTYPED);
+		assert.equal(result.type, ResolvedNumberType.UNTYPED);
 		assert.equal(result.text, '([1] + [1] + [1] + [5] + [5] + [7] + [3] + ~~[5]~~)');
 	});
 
@@ -899,7 +900,7 @@ describe('NumberMatcher Tests', () => {
 		const result = matcher.resolve(tracker);
 		assert.equal(tracker.count, 0);
 		assert.equal(result.value, 2);
-		assert.equal(result.type, ParserObjects.ResolvedNumberType.MATCH_COUNT);
+		assert.equal(result.type, ResolvedNumberType.MATCH_COUNT);
 		assert.equal(result.text, '(1 + 1 + 1 + 3 + 3 + 4 + 2 + ~~2~~)');
 	});
 });
@@ -915,7 +916,7 @@ describe('SuccessFailCounter Tests', () => {
 		const result = matcher.resolve(tracker);
 		assert.equal(tracker.count, 0);
 		assert.equal(result.value, 2);
-		assert.equal(result.type, ParserObjects.ResolvedNumberType.SUCCESS_FAIL);
+		assert.equal(result.type, ResolvedNumberType.SUCCESS_FAIL);
 		assert.equal(result.text, '(~~3~~ + 1 + 4 + 5 + 1)');
 	});
 
@@ -928,7 +929,7 @@ describe('SuccessFailCounter Tests', () => {
 		const result = matcher.resolve(tracker);
 		assert.equal(tracker.count, 0);
 		assert.equal(result.value, 1);
-		assert.equal(result.type, ParserObjects.ResolvedNumberType.SUCCESS_FAIL);
+		assert.equal(result.type, ResolvedNumberType.SUCCESS_FAIL);
 		assert.equal(result.text, '(3 + 1 + 4 + 5 + 1)');
 	});
 
@@ -941,7 +942,7 @@ describe('SuccessFailCounter Tests', () => {
 		const result = matcher.resolve(tracker);
 		assert.equal(tracker.count, 5);
 		assert.equal(result.value, 1);
-		assert.equal(result.type, ParserObjects.ResolvedNumberType.SUCCESS_FAIL);
+		assert.equal(result.type, ResolvedNumberType.SUCCESS_FAIL);
 		assert.equal(result.text, '(__[3]__ + *[1]* + __[4]__ + __[5]__ + *[1]*)');
 	});
 });
@@ -1195,7 +1196,7 @@ class FakeDiceRoll {
 	}
 
 	getResolveType() {
-		return ParserObjects.ParserResolveTypes.DICE_ROLL;
+		return ParserResolveTypes.DICE_ROLL;
 	}
 }
 
@@ -1209,7 +1210,7 @@ class FakeNumberList {
 	}
 
 	getResolveType() {
-		return ParserObjects.ParserResolveTypes.NUMBER_LIST;
+		return ParserResolveTypes.NUMBER_LIST;
 	}
 }
 

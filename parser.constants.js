@@ -4,6 +4,18 @@ const KeepDropType = {
 	LOW: 3,
 };
 
+const ParserResolveTypes = {
+	DICE_ROLL: 1,
+	NUMBER: 2,
+	NUMBER_LIST: 3,
+};
+
+const ResolvedNumberType = {
+	UNTYPED: 0,
+	SUCCESS_FAIL: 1,
+	MATCH_COUNT: 2,
+};
+
 const FunctionNames = {
 	FLOOR: 'floor',
 	ROUND: 'round',
@@ -23,6 +35,8 @@ const CharacterSets = {
 
 module.exports = {
 	KeepDropType,
+	ParserResolveTypes,
+	ResolvedNumberType,
 	FunctionNames,
 	FunctionList,
 	CharacterSets,

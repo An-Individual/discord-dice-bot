@@ -1,6 +1,4 @@
-const ParserObjects = require('./parser-objects');
-const { DiceStringIterator } = require('./parser.iterator');
-const { carveMathString, MathFunction } = require('./parser.carving.math');
+const { resolveToNumber } = require('./parser.resolution');
 const { carveDiceString } = require('./parser.carving');
 const { processCarvedHierarchy } = require('./parser.processing');
 
@@ -22,7 +20,7 @@ function ResolveDiceString(input, tracker) {
 	let result = baseResolver.resolve(tracker);
 
 	// Ensure the result is single number.
-	result = ParserObjects.resolveToNumber(result);
+	result = resolveToNumber(result);
 
 	return result;
 }

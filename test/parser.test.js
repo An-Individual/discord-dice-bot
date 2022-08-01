@@ -1,10 +1,10 @@
 /* eslint-disable no-undef */
 const assert = require('assert');
+const sinon = require('sinon');
 const { ResolveDiceString, standardizeDiceString } = require('../parser');
 const { DiceStringIterator } = require('../parser.iterator');
 const { TestTracker } = require('./fake-objects');
-const ParserObjects = require('../parser-objects');
-const sinon = require('sinon');
+const { ResolvedNumberType } = require('../parser.constants');
 
 describe('Roll Parser Standardization', () => {
 	it('Remove spaces', () => {
@@ -84,7 +84,7 @@ describe('ResolveDiceString Tests', () => {
 
 		assert.equal(result.value, 6);
 		assert.equal(result.text, '[6]');
-		assert.equal(result.type, ParserObjects.ResolvedNumberType.UNTYPED);
+		assert.equal(result.type, ResolvedNumberType.UNTYPED);
 	});
 
 	it('List drop lowest excludes lowest from result', () => {
@@ -94,7 +94,7 @@ describe('ResolveDiceString Tests', () => {
 
 		assert.equal(result.value, 20);
 		assert.equal(result.text, '(([15] + 5) + ~~([9] + 5)~~)');
-		assert.equal(result.type, ParserObjects.ResolvedNumberType.UNTYPED);
+		assert.equal(result.type, ResolvedNumberType.UNTYPED);
 	});
 
 	it('Nested math test', () => {
@@ -104,7 +104,7 @@ describe('ResolveDiceString Tests', () => {
 
 		assert.equal(result.value, 10);
 		assert.equal(result.text, '(1 + 3) \\* 2 + ((7 - 3) / 2)');
-		assert.equal(result.type, ParserObjects.ResolvedNumberType.UNTYPED);
+		assert.equal(result.type, ResolvedNumberType.UNTYPED);
 	});
 
 	it('Single list entry with modifier', () => {
@@ -114,7 +114,7 @@ describe('ResolveDiceString Tests', () => {
 
 		assert.equal(result.value, 2);
 		assert.equal(result.text, '(__[15]__ + [3] + __[10]__)');
-		assert.equal(result.type, ParserObjects.ResolvedNumberType.SUCCESS_FAIL);
+		assert.equal(result.type, ResolvedNumberType.SUCCESS_FAIL);
 	});
 
 	it('Single list entry with modifier', () => {
@@ -124,7 +124,7 @@ describe('ResolveDiceString Tests', () => {
 
 		assert.equal(result.value, 1);
 		assert.equal(result.text, '(([15] + [13] + [3]) + 5)');
-		assert.equal(result.type, ParserObjects.ResolvedNumberType.SUCCESS_FAIL);
+		assert.equal(result.type, ResolvedNumberType.SUCCESS_FAIL);
 	});
 
 	it('Discards within discards', () => {
@@ -134,7 +134,7 @@ describe('ResolveDiceString Tests', () => {
 
 		assert.equal(result.value, 13);
 		assert.equal(result.text, '(~~([8] + [2])~~ + ([7] + [6]))');
-		assert.equal(result.type, ParserObjects.ResolvedNumberType.UNTYPED);
+		assert.equal(result.type, ResolvedNumberType.UNTYPED);
 	});
 
 	it('Number to the power of brackets plus a number', () => {
@@ -145,7 +145,7 @@ describe('ResolveDiceString Tests', () => {
 
 		assert.equal(result.value, 4);
 		assert.equal(result.text, '1 ^ (3 - 2) + 3');
-		assert.equal(result.type, ParserObjects.ResolvedNumberType.UNTYPED);
+		assert.equal(result.type, ResolvedNumberType.UNTYPED);
 	});
 });
 

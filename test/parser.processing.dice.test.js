@@ -1,6 +1,7 @@
 /* eslint-disable no-undef */
 const assert = require('assert');
-const ParserObjects = require('../parser-objects');
+const { ParserResolveTypes } = require('../parser.constants');
+const ParserObjects = require('../parser.resolution.objects');
 const { DiceStringIterator } = require('../parser.iterator');
 const {
 	processSimpleDiceString,
@@ -46,7 +47,7 @@ describe('processSimpleDiceString Tests', () => {
 
 		assert.equal(result.numDice, 1);
 		assert.equal(result.numSides, 6);
-		assert.equal(result.getResolveType(), ParserObjects.ParserResolveTypes.DICE_ROLL);
+		assert.equal(result.getResolveType(), ParserResolveTypes.DICE_ROLL);
 	});
 
 	it('Multi-digit regular die', () => {
@@ -55,7 +56,7 @@ describe('processSimpleDiceString Tests', () => {
 
 		assert.equal(result.numDice, 1);
 		assert.equal(result.numSides, 20);
-		assert.equal(result.getResolveType(), ParserObjects.ParserResolveTypes.DICE_ROLL);
+		assert.equal(result.getResolveType(), ParserResolveTypes.DICE_ROLL);
 	});
 
 	it('Multiple regular dice', () => {
@@ -64,7 +65,7 @@ describe('processSimpleDiceString Tests', () => {
 
 		assert.equal(result.numDice, 3);
 		assert.equal(result.numSides, 20);
-		assert.equal(result.getResolveType(), ParserObjects.ParserResolveTypes.DICE_ROLL);
+		assert.equal(result.getResolveType(), ParserResolveTypes.DICE_ROLL);
 	});
 
 	it('Single fudge die', () => {
@@ -74,7 +75,7 @@ describe('processSimpleDiceString Tests', () => {
 		assert.equal(result.numDice, 1);
 		assert.equal(result.numSides, 1);
 		assert.equal(result.minValue, -1);
-		assert.equal(result.getResolveType(), ParserObjects.ParserResolveTypes.DICE_ROLL);
+		assert.equal(result.getResolveType(), ParserResolveTypes.DICE_ROLL);
 	});
 
 	it('Multiple fudge dice', () => {
@@ -84,7 +85,7 @@ describe('processSimpleDiceString Tests', () => {
 		assert.equal(result.numDice, 3);
 		assert.equal(result.numSides, 1);
 		assert.equal(result.minValue, -1);
-		assert.equal(result.getResolveType(), ParserObjects.ParserResolveTypes.DICE_ROLL);
+		assert.equal(result.getResolveType(), ParserResolveTypes.DICE_ROLL);
 	});
 });
 

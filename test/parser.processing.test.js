@@ -1,7 +1,7 @@
 /* eslint-disable no-undef */
 const assert = require('assert');
 const sinon = require('sinon');
-const ParserObjects = require('../parser-objects');
+const ParserObjects = require('../parser.resolution.objects');
 const { Brackets } = require('../parser.carving');
 const { processNumberOrDice, processBrackets } = require('../parser.processing');
 
