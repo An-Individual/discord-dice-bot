@@ -1,19 +1,5 @@
 const ParserObjects = require('./parser-objects');
-
-const KeepDropType = {
-	SPECIFIC: 1,
-	HIGH: 2,
-	LOW: 3,
-};
-
-const FunctionName = {
-	FLOOR: 'floor',
-	ROUND: 'round',
-	CEIL: 'ceil',
-	ABS: 'abs',
-};
-
-const FunctionList = [FunctionName.FLOOR, FunctionName.ROUND, FunctionName.CEIL, FunctionName.ABS];
+const { KeepDropType, FunctionNames, FunctionList, CharacterSets } = require('./parser.constants.js');
 
 function ResolveDiceString(input, tracker) {
 	// Standardization ensures that the parser isn't
@@ -138,16 +124,13 @@ class CarvingFunctions {
 	}
 
 	static readListModifierCharacters(iterator) {
-		const letterChars = 'abcdefghijklmnopqrstuvwxyz';
-		const compareChars = '=<>';
-		const listModChars = 'abcdefghijklmnopqrstuvwxyz0123456789=<>-';
 		let result = '';
 		let currentChar = iterator.peek();
-		while (!currentChar.done && listModChars.indexOf(currentChar.value) >= 0) {
+		while (!currentChar.done && CharacterSets.SetModifierCharacters.indexOf(currentChar.value) >= 0) {
 			// Negative integers are only permitted after a letter or compare
 			// character, otherwise it actual denotes a separate math function.
 			if (currentChar.value === '-') {
-				if (!result || (compareChars.indexOf(result[result.length - 1]) < 0 && letterChars.indexOf(result[result.length - 1]) < 0)) {
+				if (!result || (CharacterSets.ComparePointOperators.indexOf(result[result.length - 1]) < 0 && CharacterSets.Letters.indexOf(result[result.length - 1]) < 0)) {
 					break;
 				}
 			}
@@ -251,7 +234,6 @@ class CarvingFunctions {
 }
 
 function carveMathString(text, beforeBracket) {
-	const mathChars = '+-*/%^<>=';
 	return carveMathByCharacters(text, '+-', carveMathMultDivMod, (idx) => {
 		if (text[idx] !== '-') {
 			return false;
@@ -268,7 +250,7 @@ function carveMathString(text, beforeBracket) {
 			return true;
 		}
 
-		return mathChars.indexOf(text[idx - 1]) >= 0;
+		return CharacterSets.MathOperators.indexOf(text[idx - 1]) >= 0;
 	});
 }
 
@@ -397,13 +379,13 @@ class ProcessFunctions {
 
 		if (brackets.functionName) {
 			switch (brackets.functionName) {
-				case FunctionName.FLOOR:
+				case FunctionNames.FLOOR:
 					return new ParserObjects.Floor(entries[0]);
-				case FunctionName.CEIL:
+				case FunctionNames.CEIL:
 					return new ParserObjects.Ceiling(entries[0]);
-				case FunctionName.ROUND:
+				case FunctionNames.ROUND:
 					return new ParserObjects.Round(entries[0]);
-				case FunctionName.ABS:
+				case FunctionNames.ABS:
 					return new ParserObjects.Absolute(entries[0]);
 				default:
 					throw new Error(`Unknown function name "${brackets.functionName}"`);
@@ -685,7 +667,6 @@ class ProcessFunctions {
 	}
 
 	static processListResolver(iterator, targetObject) {
-		const successFailChars = '=<>';
 		let currentChar = iterator.peek();
 		if (currentChar.done) {
 			return targetObject;
@@ -703,7 +684,7 @@ class ProcessFunctions {
 			return new ParserObjects.NumberMatcher(targetObject, matchCount);
 		}
 
-		if (isIntChar(currentChar.value) || successFailChars.indexOf(currentChar.value) >= 0) {
+		if (isIntChar(currentChar.value) || CharacterSets.ComparePointOperators.indexOf(currentChar.value) >= 0) {
 			const successFunc = this.processModifierComparePoint(iterator);
 			let failFunc;
 			currentChar = iterator.peek();
@@ -766,7 +747,7 @@ class ProcessFunctions {
 	}
 
 	static isModifierComparePointChar(c) {
-		return c !== undefined && (isIntChar(c) || '=<>'.indexOf(c) >= 0);
+		return c !== undefined && (isIntChar(c) || CharacterSets.ComparePointOperators.indexOf(c) >= 0);
 	}
 }
 
@@ -787,7 +768,7 @@ function throwUnexpectedChar(char) {
 }
 
 function isIntChar(c) {
-	return c !== undefined && '0123456789-'.indexOf(c) >= 0;
+	return c !== undefined && (c === '-' || CharacterSets.Numbers.indexOf(c) >= 0);
 }
 
 function standardizeDiceString(str) {
