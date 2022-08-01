@@ -46,7 +46,8 @@ function enforceMessageLengthLimit(response) {
 function processStringAndCreateResponse(input) {
 	try {
 		const tracker = new DiceCountTracker();
-		const result = resolveDiceString(input, tracker);
+		const formatter = new DiscordFormatter();
+		const result = resolveDiceString(input, tracker, formatter);
 		let typeString;
 		switch (result.type) {
 			case ResolvedNumberType.MATCH_COUNT:
@@ -83,6 +84,40 @@ class DiceCountTracker {
 		if (this.count > maxDicePerRoll) {
 			throw new Error(`Exceeded the maximum of ${maxDicePerRoll} dice.`);
 		}
+	}
+}
+
+class DiscordFormatter {
+	addDiscardedFormatting(text) {
+		if (!text) {
+			return text;
+		}
+
+		return `~~${text.replace(/~~/g, '')}~~`;
+	}
+
+	addExplodeFormatting(text, isDie) {
+		if (!isDie || !text) {
+			return text;
+		}
+
+		return `**${text}**`;
+	}
+
+	addSuccessFormatting(text, isDie) {
+		if (!isDie || !text) {
+			return text;
+		}
+
+		return `__${text}__`;
+	}
+
+	addFailureFormatting(text, isDie) {
+		if (!isDie || !text) {
+			return text;
+		}
+
+		return `*${text}*`;
 	}
 }
 

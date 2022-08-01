@@ -5,8 +5,6 @@ const {
 	resolveToNumber,
 	resolveDiceToNumberList,
 	buildNumberListString,
-	addSuccessFormatting,
-	addFailureFormatting,
 
 } = require('./parser.resolution');
 
@@ -24,6 +22,12 @@ class ParserObject {
 	testResolveType(parserObject, types) {
 		if (types.indexOf(parserObject.getResolveType()) < 0) {
 			throw new Error(`${this.constructor.name} does not support operating on ${parserObject.constructor.name}`);
+		}
+	}
+
+	testFormatterProvided(formatter) {
+		if (!formatter) {
+			throw new Error('A formatter was not provided. This is a bug. Please report it :).');
 		}
 	}
 }
@@ -49,7 +53,8 @@ class DiceRoll extends ParserObject {
 		return ParserResolveTypes.DICE_ROLL;
 	}
 
-	resolve(tracker) {
+	resolve(tracker, formatter) {
+		this.testFormatterProvided(formatter);
 		tracker.notifyNewDice(this.numDice);
 		return DiceFunctions.rollDice(this.numDice, this.minValue, this.numSides);
 	}
@@ -66,7 +71,8 @@ class CustomDiceRoll extends ParserObject {
 		return ParserResolveTypes.DICE_ROLL;
 	}
 
-	resolve(tracker) {
+	resolve(tracker, formatter) {
+		this.testFormatterProvided(formatter);
 		tracker.notifyNewDice(this.numDice);
 		return DiceFunctions.rollCustomDice(this.numDice, this.sides);
 	}
@@ -97,9 +103,10 @@ class DiceExplosionRegular extends ParserOperatorObject {
 		return ParserResolveTypes.DICE_ROLL;
 	}
 
-	resolve(tracker) {
+	resolve(tracker, formatter) {
+		this.testFormatterProvided(formatter);
 		this.testResolveType(this.child, [ParserResolveTypes.DICE_ROLL]);
-		const roll = this.child.resolve(tracker);
+		const roll = this.child.resolve(tracker, formatter);
 
 		for (let i = 0; i < roll.length; i++) {
 			if (!roll[i].maxVal) {
@@ -140,9 +147,10 @@ class DiceExplosionCompounding extends ParserOperatorObject {
 		return ParserResolveTypes.DICE_ROLL;
 	}
 
-	resolve(tracker) {
+	resolve(tracker, formatter) {
+		this.testFormatterProvided(formatter);
 		this.testResolveType(this.child, [ParserResolveTypes.DICE_ROLL]);
-		const roll = this.child.resolve(tracker);
+		const roll = this.child.resolve(tracker, formatter);
 
 		for (let i = 0; i < roll.length; i++) {
 			if (!roll[i].maxVal) {
@@ -175,9 +183,10 @@ class DiceExplosionPenetrating extends ParserOperatorObject {
 		return ParserResolveTypes.DICE_ROLL;
 	}
 
-	resolve(tracker) {
+	resolve(tracker, formatter) {
+		this.testFormatterProvided(formatter);
 		this.testResolveType(this.child, [ParserResolveTypes.DICE_ROLL]);
-		const roll = this.child.resolve(tracker);
+		const roll = this.child.resolve(tracker, formatter);
 
 		for (let i = 0; i < roll.length; i++) {
 			if (!roll[i].maxVal) {
@@ -218,9 +227,10 @@ class ReRoll extends ParserOperatorObject {
 		return ParserResolveTypes.DICE_ROLL;
 	}
 
-	resolve(tracker) {
+	resolve(tracker, formatter) {
+		this.testFormatterProvided(formatter);
 		this.testResolveType(this.child, [ParserResolveTypes.DICE_ROLL]);
-		const roll = this.child.resolve(tracker);
+		const roll = this.child.resolve(tracker, formatter);
 
 		const initialDiceCount = roll.length;
 		for (let i = 0; i < (this.onlyOnce ? initialDiceCount : roll.length); i++) {
@@ -230,7 +240,7 @@ class ReRoll extends ParserOperatorObject {
 
 			if (this.conditionMatches(roll[i].value)) {
 				tracker.notifyNewDice(1);
-				roll[i].discard();
+				roll[i].discard(formatter);
 				const newRoll = roll[i].getUnrolledCopy();
 				newRoll.addRoll();
 				roll.push(newRoll);
@@ -262,9 +272,10 @@ class KeepDropConditional extends ParserOperatorObject {
 		return this.child.getResolveType() === ParserResolveTypes.DICE_ROLL ? ParserResolveTypes.DICE_ROLL : ParserResolveTypes.NUMBER_LIST;
 	}
 
-	resolve(tracker) {
+	resolve(tracker, formatter) {
+		this.testFormatterProvided(formatter);
 		this.testResolveType(this.child, [ParserResolveTypes.DICE_ROLL, ParserResolveTypes.NUMBER_LIST]);
-		const values = this.child.resolve(tracker);
+		const values = this.child.resolve(tracker, formatter);
 
 		const initialDiceCount = values.length;
 		for (let i = 0; i < (this.onlyOnce ? initialDiceCount : values.length); i++) {
@@ -274,7 +285,7 @@ class KeepDropConditional extends ParserOperatorObject {
 
 			if ((this.isKeep && !this.conditionMatches(values[i].value)) ||
 				((!this.isKeep && this.conditionMatches(values[i].value)))) {
-				values[i].discard();
+				values[i].discard(formatter);
 			}
 		}
 
@@ -304,9 +315,10 @@ class KeepDropHighLow extends ParserOperatorObject {
 		return this.child.getResolveType() === ParserResolveTypes.DICE_ROLL ? ParserResolveTypes.DICE_ROLL : ParserResolveTypes.NUMBER_LIST;
 	}
 
-	resolve(tracker) {
+	resolve(tracker, formatter) {
+		this.testFormatterProvided(formatter);
 		this.testResolveType(this.child, [ParserResolveTypes.DICE_ROLL, ParserResolveTypes.NUMBER_LIST]);
-		const values = this.child.resolve(tracker);
+		const values = this.child.resolve(tracker, formatter);
 
 		const valuesCopy = values.slice();
 		if (this.isHigh) {
@@ -322,12 +334,12 @@ class KeepDropHighLow extends ParserOperatorObject {
 				if (!valuesCopy[i].discarded) {
 					interactCount++;
 					if (!this.isKeep) {
-						valuesCopy[i].discard();
+						valuesCopy[i].discard(formatter);
 					}
 				}
 			}
 			else if (this.isKeep) {
-				valuesCopy[i].discard();
+				valuesCopy[i].discard(formatter);
 			}
 		}
 
@@ -345,12 +357,13 @@ class NumberMatcher extends ParserOperatorObject {
 		return ParserResolveTypes.MATCH_COUNT;
 	}
 
-	resolve(tracker) {
+	resolve(tracker, formatter) {
+		this.testFormatterProvided(formatter);
 		this.testResolveType(this.child, [ParserResolveTypes.DICE_ROLL, ParserResolveTypes.NUMBER_LIST]);
-		let values = this.child.resolve(tracker);
+		let values = this.child.resolve(tracker, formatter);
 
 		if (this.child.getResolveType() == ParserResolveTypes.DICE_ROLL) {
-			values = resolveDiceToNumberList(values);
+			values = resolveDiceToNumberList(values, formatter);
 		}
 
 		const valueTracker = [];
@@ -408,13 +421,14 @@ class SuccessFailCounter extends ParserOperatorObject {
 		return ParserResolveTypes.SUCCESS_FAILURE;
 	}
 
-	resolve(tracker) {
+	resolve(tracker, formatter) {
+		this.testFormatterProvided(formatter);
 		this.testResolveType(this.child, [ParserResolveTypes.DICE_ROLL, ParserResolveTypes.NUMBER_LIST]);
-		let values = this.child.resolve(tracker);
+		let values = this.child.resolve(tracker, formatter);
 
 		let childWasDice = false;
 		if (this.child.getResolveType() == ParserResolveTypes.DICE_ROLL) {
-			values = resolveDiceToNumberList(values);
+			values = resolveDiceToNumberList(values, formatter);
 			childWasDice = true;
 		}
 
@@ -424,15 +438,11 @@ class SuccessFailCounter extends ParserOperatorObject {
 				continue;
 			}
 			if (this.successFunc(values[i].value)) {
-				if (childWasDice) {
-					values[i].text = addSuccessFormatting(values[i].text);
-				}
+				values[i].text = formatter.addSuccessFormatting(values[i].text, childWasDice);
 				total++;
 			}
 			else if (this.failureFunc && this.failureFunc(values[i].value)) {
-				if (childWasDice) {
-					values[i].text = addFailureFormatting(values[i].text);
-				}
+				values[i].text = formatter.addFailureFormatting(values[i].text, childWasDice);
 				total--;
 			}
 		}
@@ -453,8 +463,9 @@ class Bracket extends ParserOperatorObject {
 		return this.child.getResolveType();
 	}
 
-	resolve(tracker) {
-		const result = this.child.resolve(tracker);
+	resolve(tracker, formatter) {
+		this.testFormatterProvided(formatter);
+		const result = this.child.resolve(tracker, formatter);
 
 		if (result.text) {
 			result.text = `(${result.text})`;
@@ -474,11 +485,12 @@ class NumberList extends ParserObject {
 		return ParserResolveTypes.NUMBER_LIST;
 	}
 
-	resolve(tracker) {
+	resolve(tracker, formatter) {
+		this.testFormatterProvided(formatter);
 		const result = [];
 
 		for (let i = 0; i < this.entries.length; i++) {
-			result.push(resolveToNumber(this.entries[i].resolve(tracker)));
+			result.push(resolveToNumber(this.entries[i].resolve(tracker, formatter), formatter));
 		}
 
 		return result;
@@ -494,9 +506,10 @@ class Floor extends ParserOperatorObject {
 		return ParserResolveTypes.NUMBER;
 	}
 
-	resolve(tracker) {
-		let result = this.child.resolve(tracker);
-		result = resolveToNumber(result);
+	resolve(tracker, formatter) {
+		this.testFormatterProvided(formatter);
+		let result = this.child.resolve(tracker, formatter);
+		result = resolveToNumber(result, formatter);
 
 		result.text = `floor(${result.text})`;
 		result.value = Math.floor(result.value);
@@ -514,9 +527,10 @@ class Ceiling extends ParserOperatorObject {
 		return ParserResolveTypes.NUMBER;
 	}
 
-	resolve(tracker) {
-		let result = this.child.resolve(tracker);
-		result = resolveToNumber(result);
+	resolve(tracker, formatter) {
+		this.testFormatterProvided(formatter);
+		let result = this.child.resolve(tracker, formatter);
+		result = resolveToNumber(result, formatter);
 
 		result.text = `ceil(${result.text})`;
 		result.value = Math.ceil(result.value);
@@ -534,9 +548,10 @@ class Round extends ParserOperatorObject {
 		return ParserResolveTypes.NUMBER;
 	}
 
-	resolve(tracker) {
-		let result = this.child.resolve(tracker);
-		result = resolveToNumber(result);
+	resolve(tracker, formatter) {
+		this.testFormatterProvided(formatter);
+		let result = this.child.resolve(tracker, formatter);
+		result = resolveToNumber(result, formatter);
 
 		result.text = `round(${result.text})`;
 		result.value = Math.round(result.value);
@@ -554,9 +569,10 @@ class Absolute extends ParserOperatorObject {
 		return ParserResolveTypes.NUMBER;
 	}
 
-	resolve(tracker) {
-		let result = this.child.resolve(tracker);
-		result = resolveToNumber(result);
+	resolve(tracker, formatter) {
+		this.testFormatterProvided(formatter);
+		let result = this.child.resolve(tracker, formatter);
+		result = resolveToNumber(result, formatter);
 
 		result.text = `abs(${result.text})`;
 		result.value = Math.abs(result.value);
@@ -576,20 +592,20 @@ class MathParserObject extends ParserObject {
 		return ParserResolveTypes.NUMBER;
 	}
 
-	getLeft(tracker) {
+	getLeft(tracker, formatter) {
 		if (!this.left) {
 			throw new Error('Unknown syntax error');
 		}
 
-		return resolveToNumber(this.left.resolve(tracker));
+		return resolveToNumber(this.left.resolve(tracker, formatter), formatter);
 	}
 
-	getRight(tracker) {
+	getRight(tracker, formatter) {
 		if (!this.right) {
 			throw new Error('Unknown syntax error');
 		}
 
-		return resolveToNumber(this.right.resolve(tracker));
+		return resolveToNumber(this.right.resolve(tracker, formatter), formatter);
 	}
 
 	buildResult(leftNum, rightNum, char) {
@@ -613,17 +629,18 @@ class MathAdd extends MathParserObject {
 		return ParserResolveTypes.NUMBER;
 	}
 
-	resolve(tracker) {
+	resolve(tracker, formatter) {
+		this.testFormatterProvided(formatter);
 		// Add skips the helper functions so it can handle dice collections.
-		const leftRes = this.left.resolve(tracker);
-		const rightRes = this.right.resolve(tracker);
+		const leftRes = this.left.resolve(tracker, formatter);
+		const rightRes = this.right.resolve(tracker, formatter);
 
 		if (this.getResolveType() === ParserResolveTypes.DICE_ROLL) {
 			return leftRes.concat(rightRes);
 		}
 
-		const leftNum = resolveToNumber(leftRes);
-		const rightNum = resolveToNumber(rightRes);
+		const leftNum = resolveToNumber(leftRes, formatter);
+		const rightNum = resolveToNumber(rightRes, formatter);
 
 		const result = this.buildResult(leftNum, rightNum, '+');
 		result.value = leftNum.value + rightNum.value;
@@ -636,10 +653,11 @@ class MathSubtract extends MathParserObject {
 		super(left, right);
 	}
 
-	resolve(tracker) {
+	resolve(tracker, formatter) {
+		this.testFormatterProvided(formatter);
 		// Add skips the helper functions so it can handle dice collections.
-		const leftNum = this.getLeft(tracker);
-		const rightNum = this.getRight(tracker);
+		const leftNum = this.getLeft(tracker, formatter);
+		const rightNum = this.getRight(tracker, formatter);
 
 		const result = this.buildResult(leftNum, rightNum, '-');
 		result.value = leftNum.value - rightNum.value;
@@ -652,10 +670,11 @@ class MathMultiply extends MathParserObject {
 		super(left, right);
 	}
 
-	resolve(tracker) {
+	resolve(tracker, formatter) {
+		this.testFormatterProvided(formatter);
 		// Add skips the helper functions so it can handle dice collections.
-		const leftNum = this.getLeft(tracker);
-		const rightNum = this.getRight(tracker);
+		const leftNum = this.getLeft(tracker, formatter);
+		const rightNum = this.getRight(tracker, formatter);
 
 		const result = this.buildResult(leftNum, rightNum, '\\*');
 		result.value = leftNum.value * rightNum.value;
@@ -668,10 +687,11 @@ class MathDivide extends MathParserObject {
 		super(left, right);
 	}
 
-	resolve(tracker) {
+	resolve(tracker, formatter) {
+		this.testFormatterProvided(formatter);
 		// Add skips the helper functions so it can handle dice collections.
-		const leftNum = this.getLeft(tracker);
-		const rightNum = this.getRight(tracker);
+		const leftNum = this.getLeft(tracker, formatter);
+		const rightNum = this.getRight(tracker, formatter);
 
 		const result = this.buildResult(leftNum, rightNum, '/');
 		result.value = leftNum.value / rightNum.value;
@@ -684,10 +704,11 @@ class MathModulo extends MathParserObject {
 		super(left, right);
 	}
 
-	resolve(tracker) {
+	resolve(tracker, formatter) {
+		this.testFormatterProvided(formatter);
 		// Add skips the helper functions so it can handle dice collections.
-		const leftNum = this.getLeft(tracker);
-		const rightNum = this.getRight(tracker);
+		const leftNum = this.getLeft(tracker, formatter);
+		const rightNum = this.getRight(tracker, formatter);
 
 		const result = this.buildResult(leftNum, rightNum, '%');
 		result.value = leftNum.value % rightNum.value;
@@ -700,10 +721,11 @@ class MathExponent extends MathParserObject {
 		super(left, right);
 	}
 
-	resolve(tracker) {
+	resolve(tracker, formatter) {
+		this.testFormatterProvided(formatter);
 		// Add skips the helper functions so it can handle dice collections.
-		const leftNum = this.getLeft(tracker);
-		const rightNum = this.getRight(tracker);
+		const leftNum = this.getLeft(tracker, formatter);
+		const rightNum = this.getRight(tracker, formatter);
 
 		const result = this.buildResult(leftNum, rightNum, '^');
 		result.value = leftNum.value ** rightNum.value;

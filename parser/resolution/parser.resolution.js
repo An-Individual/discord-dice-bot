@@ -8,13 +8,13 @@ class ResolvedNumber {
 		this.type = !type ? ResolvedNumberType.UNTYPED : type;
 	}
 
-	discard() {
-		this.text = addDiscardedFormatting(this.text);
+	discard(formatter) {
+		this.text = formatter.addDiscardedFormatting(this.text);
 		this.discarded = true;
 	}
 }
 
-function resolveToNumber(object) {
+function resolveToNumber(object, formatter) {
 	// If it's already just a number return it.
 	if (object instanceof ResolvedNumber) {
 		return object;
@@ -27,7 +27,7 @@ function resolveToNumber(object) {
 
 	// If it's a dice list turn it into a number list.
 	if (object[0] instanceof DiceFunctions.DieResult) {
-		object = resolveDiceToNumberList(object);
+		object = resolveDiceToNumberList(object, formatter);
 	}
 
 	// If it's a number list sum the numbers into a single number.
@@ -42,9 +42,9 @@ function resolveToNumber(object) {
 	throw new Error('Unknown syntax error');
 }
 
-function resolveDiceToNumberList(dice) {
+function resolveDiceToNumberList(dice, formatter) {
 	return dice.map(d => {
-		const result = new ResolvedNumber(d.value, getDieString(d));
+		const result = new ResolvedNumber(d.value, getDieString(d, formatter));
 		result.discarded = d.discarded;
 		return result;
 	});
@@ -64,7 +64,7 @@ function buildNumberListString(numbers, joinString) {
 	return `(${numbers.map(v => v.text).join(joinString)})`;
 }
 
-function getDieString(die) {
+function getDieString(die, formatter) {
 	let numString = '[' + die.rolls[0].toString();
 	for (let i = 1; i < die.rolls.length; i++) {
 		if (die.rolls[i] >= 0) {
@@ -80,46 +80,14 @@ function getDieString(die) {
 	numString += ']';
 
 	if (die.discarded) {
-		numString = addDiscardedFormatting(numString);
+		numString = formatter.addDiscardedFormatting(numString, true);
 	}
 
 	if (die.exploded) {
-		numString = addExplodeFormatting(numString);
+		numString = formatter.addExplodeFormatting(numString, true);
 	}
 
 	return numString;
-}
-
-function addDiscardedFormatting(text) {
-	if (!text) {
-		return text;
-	}
-
-	return `~~${text.replace(/~~/g, '')}~~`;
-}
-
-function addExplodeFormatting(text) {
-	if (!text) {
-		return text;
-	}
-
-	return `**${text}**`;
-}
-
-function addSuccessFormatting(text) {
-	if (!text) {
-		return text;
-	}
-
-	return `__${text}__`;
-}
-
-function addFailureFormatting(text) {
-	if (!text) {
-		return text;
-	}
-
-	return `*${text}*`;
 }
 
 module.exports = {
@@ -127,8 +95,4 @@ module.exports = {
 	resolveToNumber,
 	resolveDiceToNumberList,
 	buildNumberListString,
-	addDiscardedFormatting,
-	addExplodeFormatting,
-	addSuccessFormatting,
-	addFailureFormatting,
 };

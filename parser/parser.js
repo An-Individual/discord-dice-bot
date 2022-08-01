@@ -2,7 +2,7 @@ const { resolveToNumber } = require('./resolution/parser.resolution');
 const { carveDiceString } = require('./carving/parser.carving');
 const { processCarvedHierarchy } = require('./processing/parser.processing');
 
-function resolveDiceString(input, tracker) {
+function resolveDiceString(input, tracker, formatter) {
 	// Standardization ensures that the parser isn't
 	// tripped up by variations in white space or capitalization
 	input = standardizeDiceString(input);
@@ -17,10 +17,10 @@ function resolveDiceString(input, tracker) {
 	const baseResolver = processCarvedHierarchy(carvedHierarchy);
 
 	// Finally resolve the string into its result.
-	let result = baseResolver.resolve(tracker);
+	let result = baseResolver.resolve(tracker, formatter);
 
 	// Ensure the result is single number.
-	result = resolveToNumber(result);
+	result = resolveToNumber(result, formatter);
 
 	return result;
 }
