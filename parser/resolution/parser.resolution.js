@@ -1,5 +1,5 @@
-const DiceFunctions = require('./dice-functions');
-const { ResolvedNumberType } = require('./parser.constants');
+const DiceFunctions = require('../parser.dice-functions');
+const { ResolvedNumberType } = require('../parser.constants');
 
 class ResolvedNumber {
 	constructor(value, text, type) {

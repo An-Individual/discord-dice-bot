@@ -1,7 +1,7 @@
 /* eslint-disable no-undef */
 const assert = require('assert');
-const { carveDiceString, Brackets } = require('../parser.carving');
-const { MathFunction } = require('../parser.carving.math');
+const { carveDiceString, Brackets } = require('../parser/carving/parser.carving');
+const { MathFunction } = require('../parser/carving/parser.carving.math');
 
 
 describe('carveDiceString Tests', () => {

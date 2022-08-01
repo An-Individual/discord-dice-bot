@@ -1,5 +1,5 @@
-const Errors = require('./parser.errors');
-const { CharacterSets } = require('./parser.constants');
+const Errors = require('../parser.errors');
+const { CharacterSets } = require('../parser.constants');
 
 function processInt(iterator) {
 	let str = '';

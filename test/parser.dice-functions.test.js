@@ -1,14 +1,14 @@
 /* eslint-disable no-undef */
 const assert = require('assert');
-const DiceFunctions = require('../dice-functions');
 const sinon = require('sinon');
+const DiceFunctions = require('../parser/parser.dice-functions');
 
 describe('Dice Roller Tests: Low Rolls', () => {
-	before(function() {
+	before(() => {
 		sinon.stub(Math, 'random').returns(0);
 	});
 
-	after(function() {
+	after(() => {
 		sinon.restore();
 	});
 
@@ -59,11 +59,11 @@ describe('Dice Roller Tests: Low Rolls', () => {
 });
 
 describe('Dice Roller Tests: Middle Rolls', () => {
-	before(function() {
+	before(() => {
 		sinon.stub(Math, 'random').returns(0.50);
 	});
 
-	after(function() {
+	after(() => {
 		sinon.restore();
 	});
 
@@ -94,11 +94,11 @@ describe('Dice Roller Tests: Middle Rolls', () => {
 });
 
 describe('Dice Roller Tests: High Rolls', () => {
-	before(function() {
+	before(() => {
 		sinon.stub(Math, 'random').returns(0.99);
 	});
 
-	after(function() {
+	after(() => {
 		sinon.restore();
 	});
 
@@ -149,11 +149,11 @@ describe('Dice Roller Tests: High Rolls', () => {
 });
 
 describe('Dice Roller Tests: Die roll functions', () => {
-	beforeEach(function() {
+	beforeEach(() => {
 		sinon.stub(Math, 'random').returns(0.5);
 	});
 
-	afterEach(function() {
+	afterEach(() => {
 		sinon.restore();
 	});
 

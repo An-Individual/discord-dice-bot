@@ -1,10 +1,9 @@
-const Errors = require('./parser.errors');
-const ParserObjects = require('./parser.resolution.objects');
-const { ParserResolveTypes } = require('./parser.constants');
-const { DiceStringIterator } = require('./parser.iterator');
-const { FunctionNames } = require('./parser.constants');
-const { MathFunction } = require('./parser.carving.math');
-const { Brackets } = require('./parser.carving');
+const Errors = require('../parser.errors');
+const ParserObjects = require('../resolution/parser.resolution.objects');
+const { ParserResolveTypes, FunctionNames } = require('../parser.constants');
+const { DiceStringIterator } = require('../parser.iterator');
+const { MathFunction } = require('../carving/parser.carving.math');
+const { Brackets } = require('../carving/parser.carving');
 const { processInt, processFloat } = require('./parser.processing.numbers');
 const { processDice, processListResolver, processKeepDropModifier } = require('./parser.processing.dice');
 

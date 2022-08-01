@@ -1,4 +1,4 @@
-const { CharacterSets } = require('./parser.constants.js');
+const { CharacterSets } = require('../parser.constants.js');
 
 class MathFunction {
 	constructor(symbol, left, right) {

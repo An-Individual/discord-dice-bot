@@ -1,8 +1,8 @@
-const Errors = require('./parser.errors');
-const ParserObjects = require('./parser.resolution.objects');
-const { KeepDropType, CharacterSets } = require('./parser.constants');
+const Errors = require('../parser.errors');
+const ParserObjects = require('../resolution/parser.resolution.objects');
+const { KeepDropType, CharacterSets } = require('../parser.constants');
 const { processInt, isIntChar } = require('./parser.processing.numbers');
-const { processModifierComparePoint, isModifierComparePointChar } = require('./parser.processing.comparepoints');
+const { processModifierComparePoint, isModifierComparePointChar } = require('./parser.processing.compare-points');
 
 function processDice(iterator, numDice) {
 	const coreDice = processSimpleDiceString(iterator, numDice);

@@ -1,8 +1,8 @@
-const { FunctionList, CharacterSets } = require('./parser.constants.js');
-const { DiceStringIterator } = require('./parser.iterator');
+const { FunctionList, CharacterSets } = require('../parser.constants.js');
+const { DiceStringIterator } = require('../parser.iterator');
 const { carveMathString } = require('./parser.carving.math');
 const { foldAdjacentObjectsIntoMathFuncs } = require('./parser.carving.math.folding');
-const Errors = require('./parser.errors');
+const Errors = require('../parser.errors');
 
 class Brackets {
 	constructor(isList) {

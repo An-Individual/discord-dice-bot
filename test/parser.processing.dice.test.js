@@ -1,15 +1,15 @@
 /* eslint-disable no-undef */
 const assert = require('assert');
-const { ParserResolveTypes } = require('../parser.constants');
-const ParserObjects = require('../parser.resolution.objects');
-const { DiceStringIterator } = require('../parser.iterator');
+const { ParserResolveTypes } = require('../parser/parser.constants');
+const ParserObjects = require('../parser/resolution/parser.resolution.objects');
+const { DiceStringIterator } = require('../parser/parser.iterator');
 const {
 	processSimpleDiceString,
 	processRollModifier,
 	processExplosionModifier,
 	processRerollModifier,
 	processKeepDropModifier,
-} = require('../parser.processing.dice');
+} = require('../parser/processing/parser.processing.dice');
 
 
 describe('processSimpleDiceString Tests', () => {

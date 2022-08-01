@@ -1,7 +1,7 @@
 /* eslint-disable no-undef */
 const assert = require('assert');
-const { DiceStringIterator } = require('../parser.iterator');
-const { processModifierComparePoint } = require('../parser.processing.comparepoints');
+const { DiceStringIterator } = require('../parser/parser.iterator');
+const { processModifierComparePoint } = require('../parser/processing/parser.processing.compare-points');
 
 describe('processModifierComparePoint Tests', () => {
 	it('Empty iterator throws error', () => {

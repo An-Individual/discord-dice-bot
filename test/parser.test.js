@@ -1,10 +1,10 @@
 /* eslint-disable no-undef */
 const assert = require('assert');
 const sinon = require('sinon');
-const { ResolveDiceString, standardizeDiceString } = require('../parser');
-const { DiceStringIterator } = require('../parser.iterator');
+const { resolveDiceString, standardizeDiceString } = require('../parser/parser');
+const { DiceStringIterator } = require('../parser/parser.iterator');
 const { TestTracker } = require('./fake-objects');
-const { ResolvedNumberType } = require('../parser.constants');
+const { ResolvedNumberType } = require('../parser/parser.constants');
 
 describe('Roll Parser Standardization', () => {
 	it('Remove spaces', () => {
@@ -73,14 +73,14 @@ describe('StringIterator Tests', () => {
 	});
 });
 
-describe('ResolveDiceString Tests', () => {
+describe('resolveDiceString Tests', () => {
 	afterEach(() => {
 		sinon.restore();
 	});
 	it('Simple d10 roll', () => {
 		sinon.stub(Math, 'random').returns(0.5);
 		const tracker = new TestTracker();
-		const result = ResolveDiceString('1d10', tracker);
+		const result = resolveDiceString('1d10', tracker);
 
 		assert.equal(result.value, 6);
 		assert.equal(result.text, '[6]');
@@ -90,7 +90,7 @@ describe('ResolveDiceString Tests', () => {
 	it('List drop lowest excludes lowest from result', () => {
 		setRollSequence([0.7, 0.4]);
 		const tracker = new TestTracker();
-		const result = ResolveDiceString('{1d20+5,1d20+5}kh', tracker);
+		const result = resolveDiceString('{1d20+5,1d20+5}kh', tracker);
 
 		assert.equal(result.value, 20);
 		assert.equal(result.text, '(([15] + 5) + ~~([9] + 5)~~)');
@@ -100,7 +100,7 @@ describe('ResolveDiceString Tests', () => {
 	it('Nested math test', () => {
 		setRollSequence([0.7, 0.4]);
 		const tracker = new TestTracker();
-		const result = ResolveDiceString('(1+3)*2+((7-3)/2)', tracker);
+		const result = resolveDiceString('(1+3)*2+((7-3)/2)', tracker);
 
 		assert.equal(result.value, 10);
 		assert.equal(result.text, '(1 + 3) \\* 2 + ((7 - 3) / 2)');
@@ -110,7 +110,7 @@ describe('ResolveDiceString Tests', () => {
 	it('Single list entry with modifier', () => {
 		setRollSequence([0.7, 0.1, 0.9]);
 		const tracker = new TestTracker();
-		const result = ResolveDiceString('{2d20+1d10}>7', tracker);
+		const result = resolveDiceString('{2d20+1d10}>7', tracker);
 
 		assert.equal(result.value, 2);
 		assert.equal(result.text, '(__[15]__ + [3] + __[10]__)');
@@ -120,7 +120,7 @@ describe('ResolveDiceString Tests', () => {
 	it('Single list entry with modifier', () => {
 		setRollSequence([0.7, 0.6, 0.1]);
 		const tracker = new TestTracker();
-		const result = ResolveDiceString('{3d20+5}>10', tracker);
+		const result = resolveDiceString('{3d20+5}>10', tracker);
 
 		assert.equal(result.value, 1);
 		assert.equal(result.text, '(([15] + [13] + [3]) + 5)');
@@ -130,7 +130,7 @@ describe('ResolveDiceString Tests', () => {
 	it('Discards within discards', () => {
 		setRollSequence([0.7, 0.1, 0.6, 0.5]);
 		const tracker = new TestTracker();
-		const result = ResolveDiceString('{1d10ro>5,2d10}dl', tracker);
+		const result = resolveDiceString('{1d10ro>5,2d10}dl', tracker);
 
 		assert.equal(result.value, 13);
 		assert.equal(result.text, '(~~([8] + [2])~~ + ([7] + [6]))');
@@ -141,7 +141,7 @@ describe('ResolveDiceString Tests', () => {
 		const tracker = new TestTracker();
 		// This string looks innocent but it crates specific challenges
 		// for the math folding that can cause errors.
-		const result = ResolveDiceString('1^(3-2)+3', tracker);
+		const result = resolveDiceString('1^(3-2)+3', tracker);
 
 		assert.equal(result.value, 4);
 		assert.equal(result.text, '1 ^ (3 - 2) + 3');

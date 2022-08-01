@@ -1,8 +1,8 @@
-const { resolveToNumber } = require('./parser.resolution');
-const { carveDiceString } = require('./parser.carving');
-const { processCarvedHierarchy } = require('./parser.processing');
+const { resolveToNumber } = require('./resolution/parser.resolution');
+const { carveDiceString } = require('./carving/parser.carving');
+const { processCarvedHierarchy } = require('./processing/parser.processing');
 
-function ResolveDiceString(input, tracker) {
+function resolveDiceString(input, tracker) {
 	// Standardization ensures that the parser isn't
 	// tripped up by variations in white space or capitalization
 	input = standardizeDiceString(input);
@@ -31,6 +31,6 @@ function standardizeDiceString(str) {
 }
 
 module.exports = {
-	ResolveDiceString,
+	resolveDiceString,
 	standardizeDiceString,
 };

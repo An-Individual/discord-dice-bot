@@ -1,5 +1,5 @@
-const DiceFunctions = require('./dice-functions');
-const { ParserResolveTypes, ResolvedNumberType } = require('./parser.constants');
+const DiceFunctions = require('../parser.dice-functions');
+const { ParserResolveTypes, ResolvedNumberType } = require('../parser.constants');
 const {
 	ResolvedNumber,
 	resolveToNumber,

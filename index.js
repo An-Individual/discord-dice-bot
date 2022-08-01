@@ -1,52 +1,10 @@
 // Require the necessary discord.js classes
 const { Client } = require('discord.js');
 const { token, maxDicePerRoll, maxMessageLength } = require('./config.json');
-const parser = require('./parser');
-const parserObjects = require('./parser-objects');
+const { ResolvedNumberType } = require('./parser/parser.constants');
+const { resolveDiceString, standardizeDiceString } = require('./parser/parser');
 
 const client = new Client({ intents: [] });
-
-/*
-// Uncomment this code and remove the client creation step above to enable the bot to
-// respond to direct messages.
-
-const { Intents } = require('discord.js');
-
-// Create a new client instance
-const client = new Client({ partials: ['CHANNEL'], intents: [Intents.FLAGS.DIRECT_MESSAGES] });
-
-client.on('messageCreate', async message => {
-	// Only handle direct messages by non-bots.
-	if (message.author.bot ||
-		message.guildId) {
-		return;
-	}
-
-	const input = TrimCommand(message.content);
-	let response = processStringAndCreateResponse(input);
-	response = enforceMessageLengthLimit(response);
-
-	await message.reply(response);
-});
-
-function TrimCommand(input) {
-	if (!input || !input.startsWith('/')) {
-		return input;
-	}
-
-	let idx = input.indexOf(':');
-	if (idx >= 0) {
-		return input.substr(idx + 1);
-	}
-
-	idx = input.indexOf(' ');
-	if (idx >= 0) {
-		return input.substr(idx + 1);
-	}
-
-	return input;
-}
-*/
 
 // When the client is ready, run this code (only once)
 client.once('ready', () => {
@@ -69,7 +27,7 @@ client.on('interactionCreate', async interaction => {
 	let input = interaction.options.getString('input');
 	const result = processStringAndCreateResponse(input);
 
-	input = parser.standardizeDiceString(input);
+	input = standardizeDiceString(input);
 
 	let response = `> \`/${interaction.commandName} input:${input}\`\n${result}`;
 	response = enforceMessageLengthLimit(response);
@@ -88,13 +46,13 @@ function enforceMessageLengthLimit(response) {
 function processStringAndCreateResponse(input) {
 	try {
 		const tracker = new DiceCountTracker();
-		const result = parser.ResolveDiceString(input, tracker);
+		const result = resolveDiceString(input, tracker);
 		let typeString;
 		switch (result.type) {
-			case parserObjects.ResolvedNumberType.MATCH_COUNT:
+			case ResolvedNumberType.MATCH_COUNT:
 				typeString = ' Matches';
 				break;
-			case parserObjects.ResolvedNumberType.SUCCESS_FAIL:
+			case ResolvedNumberType.SUCCESS_FAIL:
 				if (result.value >= 0) {
 					typeString = ' Successes';
 				}

@@ -1,4 +1,4 @@
-const { CharacterSets } = require('./parser.constants.js');
+const { CharacterSets } = require('../parser.constants.js');
 const { processInt, isIntChar } = require('./parser.processing.numbers');
 
 function processModifierComparePoint(iterator) {

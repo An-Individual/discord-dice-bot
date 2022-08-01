@@ -1,9 +1,9 @@
 /* eslint-disable no-undef */
 const assert = require('assert');
-const { ParserResolveTypes, ResolvedNumberType } = require('../parser.constants');
-const ParserObjects = require('../parser.resolution.objects');
-const DiceFunctions = require('../dice-functions');
 const sinon = require('sinon');
+const { ParserResolveTypes, ResolvedNumberType } = require('../parser/parser.constants');
+const ParserObjects = require('../parser/resolution/parser.resolution.objects');
+const DiceFunctions = require('../parser/parser.dice-functions');
 
 describe('StaticNumber Tests', () => {
 	it('Text and number correct for 0', () => {

@@ -1,7 +1,7 @@
 /* eslint-disable no-undef */
 const assert = require('assert');
-const { DiceStringIterator } = require('../parser.iterator');
-const { isIntChar, processInt } = require('../parser.processing.numbers');
+const { DiceStringIterator } = require('../parser/parser.iterator');
+const { isIntChar, processInt } = require('../parser/processing/parser.processing.numbers');
 
 describe('isIntChar Tests', () => {
 	it('Undefined input returns false', () => {
