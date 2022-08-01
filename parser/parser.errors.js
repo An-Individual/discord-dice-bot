@@ -14,8 +14,13 @@ function throwUnexpectedChar(char) {
 	throw new Error(`Encountered unexpected character '${char}'`);
 }
 
+function throwNotImplemented(methodName) {
+	throw new Error(`${methodName} has not been immplemented`);
+}
+
 module.exports = {
 	throwIfDone,
 	throwIfNotDone,
 	throwUnexpectedChar,
+	throwNotImplemented,
 };

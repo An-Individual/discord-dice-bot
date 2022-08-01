@@ -2,7 +2,7 @@
 const { Client } = require('discord.js');
 const { token, maxDicePerRoll, maxMessageLength } = require('./config.json');
 const { ResolvedNumberType } = require('./parser/parser.constants');
-const { resolveDiceString, standardizeDiceString } = require('./parser/parser');
+const { resolveDiceString, standardizeDiceString, BaseDieCountTracker, BaseFormatter } = require('./parser/parser');
 
 const client = new Client({ intents: [] });
 
@@ -92,8 +92,9 @@ function processStringAndCreateResponse(input) {
  * The tracker used during processing to make sure the number of dice rolled
  * doesn't exceed the configured maximum.
  */
-class DiceCountTracker {
+class DiceCountTracker extends BaseDieCountTracker {
 	constructor() {
+		super();
 		this.count = 0;
 	}
 
@@ -108,7 +109,7 @@ class DiceCountTracker {
 /**
  * The formatter used to apply formatting to the response string during processing.
  */
-class DiscordFormatter {
+class DiscordFormatter extends BaseFormatter {
 	addDiscardedFormatting(text) {
 		if (!text) {
 			return text;

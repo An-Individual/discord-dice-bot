@@ -1,5 +1,8 @@
-class TestTracker {
+const { BaseDieCountTracker, BaseFormatter } = require('../parser/parser');
+
+class TestTracker extends BaseDieCountTracker {
 	constructor() {
+		super();
 		this.count = 0;
 	}
 
@@ -8,7 +11,7 @@ class TestTracker {
 	}
 }
 
-class TestFormatter {
+class TestFormatter extends BaseFormatter {
 	addDiscardedFormatting(text) {
 		if (!text) {
 			return text;
