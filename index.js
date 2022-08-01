@@ -35,6 +35,12 @@ client.on('interactionCreate', async interaction => {
 	await interaction.reply({ content: response, ephemeral: gmRoll });
 });
 
+/**
+ * Given a Discord message string, ensures the string's
+ * length doesn't exceed configured maximum length.
+ * @param {string} response The full length response.
+ * @returns A length limited response.
+ */
 function enforceMessageLengthLimit(response) {
 	if (response && response.length > maxMessageLength) {
 		return response.substr(0, maxMessageLength - 3) + '...';
@@ -43,6 +49,14 @@ function enforceMessageLengthLimit(response) {
 	return response;
 }
 
+/**
+ * The bot's core work horse method. Takes a roll command
+ * input string, executes it, and creates a response string
+ * for displaying the results to the caller.
+ * @param {string} input Roll command input string
+ * @returns A response string for displaying the results to
+ * the caller.
+ */
 function processStringAndCreateResponse(input) {
 	try {
 		const tracker = new DiceCountTracker();
@@ -74,6 +88,10 @@ function processStringAndCreateResponse(input) {
 	}
 }
 
+/**
+ * The tracker used during processing to make sure the number of dice rolled
+ * doesn't exceed the configured maximum.
+ */
 class DiceCountTracker {
 	constructor() {
 		this.count = 0;
@@ -87,6 +105,9 @@ class DiceCountTracker {
 	}
 }
 
+/**
+ * The formatter used to apply formatting to the response string during processing.
+ */
 class DiscordFormatter {
 	addDiscardedFormatting(text) {
 		if (!text) {
