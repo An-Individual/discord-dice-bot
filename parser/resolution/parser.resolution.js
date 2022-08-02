@@ -1,6 +1,11 @@
 const DiceFunctions = require('../parser.dice-functions');
 const { ResolvedNumberType } = require('../parser.constants');
 
+/**
+ * The base object all the parser objects eventually get resolved to.
+ * Tracks the number it represents, the type, text representing how
+ * it was generated, and whether or not it's been discarded.
+ */
 class ResolvedNumber {
 	constructor(value, text, type) {
 		this.value = value;
@@ -14,6 +19,13 @@ class ResolvedNumber {
 	}
 }
 
+/**
+ * Turns a list of DieResultBases or ResolvedNumbers into a single ResolvedNumber.
+ * Is a no-op if called on a single ResolvedNumber, but throws an error otherwise.
+ * @param {*} object Either a ResolvedNumber, or a list of DieResultBases or ResolvedNumbers.
+ * @param {BaseFormatter} formatter The formatter to apply when generating text.
+ * @returns A ResolvedNumber representing the given object.
+ */
 function resolveToNumber(object, formatter) {
 	// If it's already just a number return it.
 	if (object instanceof ResolvedNumber) {
@@ -25,8 +37,9 @@ function resolveToNumber(object, formatter) {
 		throw new Error('Unknown syntax error');
 	}
 
-	// If it's a dice list turn it into a number list.
-	if (object[0] instanceof DiceFunctions.DieResult) {
+	// If it's a dice list turn it into a number list which will be
+	// resolved to a single number in the next step.
+	if (object[0] instanceof DiceFunctions.DieResultBase) {
 		object = resolveDiceToNumberList(object, formatter);
 	}
 
@@ -42,6 +55,12 @@ function resolveToNumber(object, formatter) {
 	throw new Error('Unknown syntax error');
 }
 
+/**
+ * Converts a list of DieResultBases into a list of ResolveNumbers.
+ * @param {DieResultBase[]} dice A list of die results.
+ * @param {BaseFormatter} formatter The formatter to apply when generating text.
+ * @returns A list of ResolvedNumbers.
+ */
 function resolveDiceToNumberList(dice, formatter) {
 	return dice.map(d => {
 		const result = new ResolvedNumber(d.value, getDieString(d, formatter));
@@ -50,6 +69,13 @@ function resolveDiceToNumberList(dice, formatter) {
 	});
 }
 
+/**
+ * Joins the text from a list of ResolvedNumbers together using the given string.
+ * Adds brackets if there are more than one.
+ * @param {ResolvedNumber[]} numbers A list of resolved numbers.
+ * @param {string} joinString The string used to join the numbers. Is ' + ' if not provided.
+ * @returns The joined text from the resolved numbers with brackets if there is more than one.
+ */
 function buildNumberListString(numbers, joinString) {
 	if (!numbers) {
 		return '';
@@ -64,6 +90,12 @@ function buildNumberListString(numbers, joinString) {
 	return `(${numbers.map(v => v.text).join(joinString)})`;
 }
 
+/**
+ * Generates a string to represent the given DieResultBase.
+ * @param {DieResultBase} die The DieResultBase to stringify.
+ * @param {BaseFormatter} formatter The formatter to apply when generating text.
+ * @returns A string represenging the given DieResultBase.
+ */
 function getDieString(die, formatter) {
 	let numString = '[' + die.rolls[0].toString();
 	for (let i = 1; i < die.rolls.length; i++) {

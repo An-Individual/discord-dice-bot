@@ -8,23 +8,44 @@ const {
 
 } = require('./parser.resolution');
 
-// All objects in the tree that the parser ultimately produces
-// are ParserObjects
+/**
+ * Base object for all objects in the resolution tree.
+ */
 class ParserObject {
+	/**
+	 * Returns the ParserResolveType that the object resolves to.
+	 */
 	getResolveType() {
 		throw new Error('getType() has not been implemented');
 	}
 
+	/**
+	 * Resolves the object and any child objects into an object
+	 * matching the type returned by getResolveType().
+	 * @param {BaseDieCountTracker} tracker The tracker to keep track of how many dice have been rolled.
+	 * @param {BaseFormatter} formatter The formatter used to apply text formatting.
+	 * @returns An object based on its getResolveTye().
+	 */
 	resolve() {
 		throw new Error('resolve() has not been implemented');
 	}
 
+	/**
+	 * A helper method that tests whether or not the give oject resolves to
+	 * one of the provided resolution types. Throws an error if it doesn't.
+	 * @param {ParserObject} parserObject The ParserObject to test.
+	 * @param {*} types A list of valid resolution types.
+	 */
 	testResolveType(parserObject, types) {
 		if (types.indexOf(parserObject.getResolveType()) < 0) {
 			throw new Error(`${this.constructor.name} does not support operating on ${parserObject.constructor.name}`);
 		}
 	}
 
+	/**
+	 * A helper method used to throw an error if the formatter isn't being
+	 * passed through the tree properly.
+	 */
 	testFormatterProvided(formatter) {
 		if (!formatter) {
 			throw new Error('A formatter was not provided. This is a bug. Please report it :).');
@@ -32,8 +53,12 @@ class ParserObject {
 	}
 }
 
-// Operator objects are a class of parser objects that operate
-// on a single child parser object.
+/**
+ * Subclass used by any ParserObject resolves a single
+ * child ParserObject before operating on the results
+ * and returning them. Primarily exists to ensure the
+ * name of the property that tracks the child is consistent.
+ */
 class ParserOperatorObject extends ParserObject {
 	constructor(child) {
 		super();
@@ -41,6 +66,9 @@ class ParserOperatorObject extends ParserObject {
 	}
 }
 
+/**
+ * Rolls the defined die when resolved.
+ */
 class DiceRoll extends ParserObject {
 	constructor(numDice, numSides, minValue) {
 		super();
@@ -60,6 +88,9 @@ class DiceRoll extends ParserObject {
 	}
 }
 
+/**
+ * Rolls the defined custom die when resolved.
+ */
 class CustomDiceRoll extends ParserObject {
 	constructor(numDice, sides) {
 		super();
@@ -78,6 +109,9 @@ class CustomDiceRoll extends ParserObject {
 	}
 }
 
+/**
+ * Used to represent a static number in the resolution tree.
+ */
 class StaticNumber extends ParserObject {
 	constructor(value) {
 		super();
@@ -93,6 +127,12 @@ class StaticNumber extends ParserObject {
 	}
 }
 
+/**
+ * Applies the regular kind of dice explosion to a wrapped dice roll.
+ * The regular explosion rolls new dice that rolled it's maximum value
+ * and will continue to roll more dice as long as the newly rolled dice
+ * continue to roll their maximum value.
+ */
 class DiceExplosionRegular extends ParserOperatorObject {
 	constructor(dice, condition) {
 		super(dice);
@@ -137,6 +177,12 @@ class DiceExplosionRegular extends ParserOperatorObject {
 	}
 }
 
+/**
+ * Applied a compounding explosion to a wrapped dice roll.
+ * Compounding explosions work like regular explosions except that
+ * the new rolls are added to the existing dice instead of
+ * being represented by new rolls.
+ */
 class DiceExplosionCompounding extends ParserOperatorObject {
 	constructor(dice, condition) {
 		super(dice);
@@ -173,6 +219,13 @@ class DiceExplosionCompounding extends ParserOperatorObject {
 	}
 }
 
+/**
+ * Applies a penetrating explosion to a wrapped dice roll.
+ * A penetrating explosion works like a regular explosion
+ * except that every newly rolled die has a -1 applied to
+ * it's value. This is represented by adding a -1 result
+ * to the newly rolled dice.
+ */
 class DiceExplosionPenetrating extends ParserOperatorObject {
 	constructor(dice, condition) {
 		super(dice);
@@ -216,6 +269,12 @@ class DiceExplosionPenetrating extends ParserOperatorObject {
 	}
 }
 
+/**
+ * Rerolls any dice in the wrapped roll that meet the
+ * given conditions. Rerolls are represented by discarding
+ * dice and adding freshly rolled dice so that the number
+ * of rerolls is visible in the results.
+ */
 class ReRoll extends ParserOperatorObject {
 	constructor(dice, conditions, onlyOnce) {
 		super(dice);
@@ -261,6 +320,12 @@ class ReRoll extends ParserOperatorObject {
 	}
 }
 
+/**
+ * Discards dice or numbers from a wrapped dice roll or number
+ * list based on the given condtion. Whether or not it keeps or
+ * discards matches depends on whether or not it is defined as
+ * a keep or drop modifier.
+ */
 class KeepDropConditional extends ParserOperatorObject {
 	constructor(child, conditions, isKeep) {
 		super(child);
@@ -303,6 +368,10 @@ class KeepDropConditional extends ParserOperatorObject {
 	}
 }
 
+/**
+ * Discards a defined number of either the highest or lowest
+ * values from a wrapped dice roll or number list.
+ */
 class KeepDropHighLow extends ParserOperatorObject {
 	constructor(child, isHigh, isKeep, count) {
 		super(child);
@@ -347,6 +416,13 @@ class KeepDropHighLow extends ParserOperatorObject {
 	}
 }
 
+/**
+ * Sorts a wrapped dice roll or number list so that
+ * matches are easier to spot, prioritizing a greater
+ * number of matchs over the number that was matched.
+ * Optionaly it changes the result to a count of the
+ * number of matches rather than simply summing them.
+ */
 class NumberMatcher extends ParserOperatorObject {
 	constructor(child, resolveToMatchCount) {
 		super(child);
@@ -410,6 +486,12 @@ class NumberMatcher extends ParserOperatorObject {
 	}
 }
 
+/**
+ * Replaces the usual summing for a wrapped dice roll or number list
+ * with a count of the number of values that match a given condition.
+ * An optional failure count can be provided that decrements the result
+ * for each value it matches.
+ */
 class SuccessFailCounter extends ParserOperatorObject {
 	constructor(child, successFunc, failureFunc) {
 		super(child);
@@ -454,6 +536,10 @@ class SuccessFailCounter extends ParserOperatorObject {
 	}
 }
 
+/**
+ * Simple resolver tree element that adds brackes to the
+ * text of the object it's wrapping.
+ */
 class Bracket extends ParserOperatorObject {
 	constructor(child) {
 		super(child);
@@ -475,6 +561,10 @@ class Bracket extends ParserOperatorObject {
 	}
 }
 
+/**
+ * Wraps a list of ParserObjects which it resolves to
+ * numbers and returns as a list of ResolvedNumbers.
+ */
 class NumberList extends ParserObject {
 	constructor(entries) {
 		super();
@@ -497,6 +587,10 @@ class NumberList extends ParserObject {
 	}
 }
 
+/**
+ * Resolves a wrapped ParserObject to a ResolvedNumber
+ * and converts the value to it's Floor value.
+ */
 class Floor extends ParserOperatorObject {
 	constructor(child) {
 		super(child);
@@ -518,6 +612,10 @@ class Floor extends ParserOperatorObject {
 	}
 }
 
+/**
+ * Resolves a wrapped ParserObject to a ResolvedNumber
+ * and converts the value to it's Ceiling value.
+ */
 class Ceiling extends ParserOperatorObject {
 	constructor(child) {
 		super(child);
@@ -539,6 +637,10 @@ class Ceiling extends ParserOperatorObject {
 	}
 }
 
+/**
+ * Resolves a wrapped ParserObject to a ResolvedNumber
+ * and converts the value to it's Rounded value.
+ */
 class Round extends ParserOperatorObject {
 	constructor(child) {
 		super(child);
@@ -560,6 +662,10 @@ class Round extends ParserOperatorObject {
 	}
 }
 
+/**
+ * Resolves a wrapped ParserObject to a ResolvedNumber
+ * and converts the value to it's Absolute value.
+ */
 class Absolute extends ParserOperatorObject {
 	constructor(child) {
 		super(child);
@@ -581,6 +687,13 @@ class Absolute extends ParserOperatorObject {
 	}
 }
 
+/**
+ * A base ParserObject for all ParserObjects that
+ * represent math operations performed by resolving
+ * two child ParserObjects, defined as being left and
+ * right, into ResolvedNumbers and combines them using
+ * a math operation.
+ */
 class MathParserObject extends ParserObject {
 	constructor(left, right) {
 		super();
@@ -592,6 +705,13 @@ class MathParserObject extends ParserObject {
 		return ParserResolveTypes.NUMBER;
 	}
 
+	/**
+	 * Resolves the left object and any child objects into an object
+	 * matching the type returned by getResolveType().
+	 * @param {BaseDieCountTracker} tracker The tracker to keep track of how many dice have been rolled.
+	 * @param {BaseFormatter} formatter The formatter used to apply text formatting.
+	 * @returns An object based on its getResolveTye().
+	 */
 	getLeft(tracker, formatter) {
 		if (!this.left) {
 			throw new Error('Unknown syntax error');
@@ -600,6 +720,13 @@ class MathParserObject extends ParserObject {
 		return resolveToNumber(this.left.resolve(tracker, formatter), formatter);
 	}
 
+	/**
+	 * Resolves the right object and any child objects into an object
+	 * matching the type returned by getResolveType().
+	 * @param {BaseDieCountTracker} tracker The tracker to keep track of how many dice have been rolled.
+	 * @param {BaseFormatter} formatter The formatter used to apply text formatting.
+	 * @returns An object based on its getResolveTye().
+	 */
 	getRight(tracker, formatter) {
 		if (!this.right) {
 			throw new Error('Unknown syntax error');
@@ -608,6 +735,16 @@ class MathParserObject extends ParserObject {
 		return resolveToNumber(this.right.resolve(tracker, formatter), formatter);
 	}
 
+	/**
+	 * Helper method that creates a new ResolvedNumber based on the left
+	 * and right numbers of a math operation and the given character
+	 * representing the operation. Leaves the value of the result at 0
+	 * to be filled in by the caller.
+	 * @param {ResolvedNumber} leftNum The ResolvedNumber from the left side of the equation.
+	 * @param {ResolvedNumber} rightNum Teh ResolvedNumber from the right side of the equation.
+	 * @param {string} char The character representing the math operation.
+	 * @returns A ResolvedNumber combining left and right with the value set to 0.
+	 */
 	buildResult(leftNum, rightNum, char) {
 		const txt = `${leftNum.text} ${char} ${rightNum.text}`;
 		const type = leftNum.type === rightNum.type ? leftNum.type : ResolvedNumberType.UNTYPED;
@@ -615,6 +752,11 @@ class MathParserObject extends ParserObject {
 	}
 }
 
+/**
+ * Adds the results of two ParserObjects together. If they both
+ * resolve to dice rolls it concatonates those rolls into a single
+ * list. Otherwise it resolves both of them to numbers.
+ */
 class MathAdd extends MathParserObject {
 	constructor(left, right) {
 		super(left, right);
@@ -648,6 +790,9 @@ class MathAdd extends MathParserObject {
 	}
 }
 
+/**
+ * Resolves two ParserObjects to numbers and subtracts them.
+ */
 class MathSubtract extends MathParserObject {
 	constructor(left, right) {
 		super(left, right);
@@ -665,6 +810,9 @@ class MathSubtract extends MathParserObject {
 	}
 }
 
+/**
+ * Resolves two ParserObjects to numbers and multiplies them.
+ */
 class MathMultiply extends MathParserObject {
 	constructor(left, right) {
 		super(left, right);
@@ -682,6 +830,9 @@ class MathMultiply extends MathParserObject {
 	}
 }
 
+/**
+ * Resolves two ParserObjects to numbers and divides the left by the right.
+ */
 class MathDivide extends MathParserObject {
 	constructor(left, right) {
 		super(left, right);
@@ -699,6 +850,9 @@ class MathDivide extends MathParserObject {
 	}
 }
 
+/**
+ * Resolves two ParserObjects to numbers and takes the modulo of the left with the right.
+ */
 class MathModulo extends MathParserObject {
 	constructor(left, right) {
 		super(left, right);
@@ -716,6 +870,9 @@ class MathModulo extends MathParserObject {
 	}
 }
 
+/**
+ * Resolves two ParserObjects to numbers and raises the left to the power of the right.
+ */
 class MathExponent extends MathParserObject {
 	constructor(left, right) {
 		super(left, right);

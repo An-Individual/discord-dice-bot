@@ -136,4 +136,4 @@ class CustomDieResult extends DieResultBase {
 	}
 }
 
-module.exports = { rollCustomDice, rollDice, DieResult, CustomDieResult };
+module.exports = { rollCustomDice, rollDice, DieResultBase, DieResult, CustomDieResult };

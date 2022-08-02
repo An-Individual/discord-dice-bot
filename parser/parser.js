@@ -6,7 +6,7 @@ const Errors = require('./parser.errors');
 /**
  * Parses and resolves the given dice string.
  * @param {string} input The dice string to parse and resolve.
- * @param {BaseDieCountTracker} tracker The tracker to keep track of how many.
+ * @param {BaseDieCountTracker} tracker The tracker to keep track of how many dice have been rolled.
  * @param {BaseFormatter} formatter The formatter used to apply text formatting.
  * @returns A ResolveNumber object containing the final number, its type, and
  * the text representing how that result was reached.
