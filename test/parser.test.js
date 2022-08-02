@@ -77,6 +77,17 @@ describe('resolveDiceString Tests', () => {
 	afterEach(() => {
 		sinon.restore();
 	});
+
+	it('Empty string gives 0 output', () => {
+		const tracker = new TestTracker();
+		const formatter = new TestFormatter();
+		const result = resolveDiceString('', tracker, formatter);
+
+		assert.equal(result.value, 0);
+		assert.equal(result.text, '');
+		assert.equal(result.type, ResolvedNumberType.UNTYPED);
+	});
+
 	it('Simple d10 roll', () => {
 		sinon.stub(Math, 'random').returns(0.5);
 		const tracker = new TestTracker();

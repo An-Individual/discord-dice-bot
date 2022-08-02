@@ -1,6 +1,7 @@
-const { resolveToNumber } = require('./resolution/parser.resolution');
+const { resolveToNumber, ResolvedNumber } = require('./resolution/parser.resolution');
 const { carveDiceString } = require('./carving/parser.carving');
 const { processCarvedHierarchy } = require('./processing/parser.processing');
+const { ResolvedNumberType } = require('./parser.constants');
 const Errors = require('./parser.errors');
 
 /**
@@ -15,6 +16,11 @@ function resolveDiceString(input, tracker, formatter) {
 	// Standardization ensures that the parser isn't
 	// tripped up by variations in white space or capitalization
 	input = standardizeDiceString(input);
+
+	// If we got an empty input, give an empty output.
+	if (!input) {
+		return new ResolvedNumber(0, '', ResolvedNumberType.UNTYPED);
+	}
 
 	// Carve and fold the string into an intermediate hierarchy that will
 	// make it much easier to order the final objects that execute the
