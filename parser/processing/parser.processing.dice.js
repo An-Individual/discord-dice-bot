@@ -4,6 +4,16 @@ const { KeepDropType, CharacterSets } = require('../parser.constants');
 const { processInt, isIntChar } = require('./parser.processing.numbers');
 const { processModifierComparePoint, isModifierComparePointChar } = require('./parser.processing.compare-points');
 
+/**
+ * Parses a dice string from the iterator including any modifiers and
+ * resolves that wrap it based on the characters that follow the 'dN' format.
+ * Example: 'd20!>4'
+ * @param {DiceIterator} iterator An iterator at the 'd' that represents
+ * the start of a dice string.
+ * @param {Number} numDice The number of dice from right before the string.
+ * @returns A ParserObject that resolves to either a dice roll or a
+ * number depending on whether or not the string includes a resolver.
+ */
 function processDice(iterator, numDice) {
 	const coreDice = processSimpleDiceString(iterator, numDice);
 
@@ -34,6 +44,14 @@ function processDice(iterator, numDice) {
 	return outerDice;
 }
 
+/**
+ * Handles the 'dN' part of the dice string.
+ * Example: 'd20'
+ * @param {DiceIterator} iterator An iterator at the 'd' that represents
+ * the start of a dice string.
+ * @param {Number} numDice The number of dice from right before the string.
+ * @returns A DiceRoll ProcessorObject read from the iterator.
+ */
 function processSimpleDiceString(iterator, numDice) {
 	let current = iterator.next();
 
@@ -62,6 +80,17 @@ function processSimpleDiceString(iterator, numDice) {
 	Errors.throwUnexpectedChar(current.value);
 }
 
+/**
+ * Attempts to read a ParserObject that modifies a dice roll from
+ * the iterator. Is a no-op if the iterator is not at one.
+ * Examples: '!', 'r>4', 'kh2'
+ * @param {DiceStringIterator} iterator An iterator at the start of a
+ * dice roll modifier. Is a no-op of not.
+ * @param {*} diceRoll The ParserObject to wrap in a modifier if one is
+ * discovered.
+ * @returns Either the input ParserObject or a new ParserObject wrapping
+ * the input.
+ */
 function processRollModifier(iterator, diceRoll) {
 	const current = iterator.peek();
 
@@ -78,6 +107,15 @@ function processRollModifier(iterator, diceRoll) {
 	return diceRoll;
 }
 
+/**
+ * Reads an explosion modifier out of the iterator. Throws an error
+ * if one isn't there.
+ * Examples: '!', '!!>5', '!p'
+ * @param {DiceStringIterator} iterator An iterator pointing at the start
+ * of an explosion modifier
+ * @param {*} diceRoll The ParserObject to wrap the explosion modifier in.
+ * @returns A ParserObject that will explode the dice from the input ParserObject.
+ */
 function processExplosionModifier(iterator, diceRoll) {
 	if (iterator.next().value !== '!') {
 		throw new Error(`Expected explosion character at position ${iterator.index}`);
@@ -110,6 +148,15 @@ function processExplosionModifier(iterator, diceRoll) {
 	}
 }
 
+/**
+ * Reads a reroll modifier out of the iterator. Throws an error
+ * if one isn't there.
+ * Examples: 'ro1', 'r6r5r<3'
+ * @param {DiceStringIterator} iterator An iterator pointing at the start
+ * of an reroll modifier
+ * @param {*} diceRoll The ParserObject to wrap the reroll modifier in.
+ * @returns A ParserObject that will reroll the dice from the input ParserObject.
+ */
 function processRerollModifier(iterator, diceRoll) {
 	if (iterator.next().value !== 'r') {
 		throw new Error(`Expected reroll character at position ${iterator.index}`);
@@ -147,6 +194,16 @@ function processRerollModifier(iterator, diceRoll) {
 	return new ParserObjects.ReRoll(diceRoll, conditions, rerollOnce);
 }
 
+/**
+ * Reads either a KeepDropSpecific or KeepDropHighLow modifier out of the
+ * iterator. Throws an error if one isn't there.
+ * Examples: 'd4d2d>5', 'kh', 'dl3'
+ * @param {DiceStringIterator} iterator An iterator pointing at the start
+ * of an keep or drop modifier.
+ * @param {*} diceRoll The ParserObject to wrap the resulting modifier in.
+ * @returns A ParserObject that will discard dice based on the type and
+ * conditions of the modifier read out of the iterator.
+ */
 function processKeepDropModifier(iterator, diceRoll) {
 	let current = iterator.next();
 	if (current.value !== 'd' && current.value !== 'k') {
@@ -179,6 +236,16 @@ function processKeepDropModifier(iterator, diceRoll) {
 	return new ParserObjects.KeepDropHighLow(diceRoll, type === KeepDropType.HIGH, isKeep, count);
 }
 
+/**
+ * A helper method for processKeepDropModifier(). Handles the fact that you can chain
+ * 'd' and 'k' commands in a row to combine conditions.
+ * Examples: '>3', '4d6', '>5k2k3'
+ * @param {DiceStringIterator} iterator Iterator at the first condition for a keep or drop
+ * specific command.
+ * @param {*} diceRoll The ParserObject to wrap the resulting modifier in.
+ * @param {*} isKeep True if the lead in character was a 'k' for keep. False if it was a 'd' for drop.
+ * @returns A KeepDropSpecific modifier wrapping the input ParserObject.
+ */
 function processKeepDropSpecificList(iterator, diceRoll, isKeep) {
 	const conditions = [processModifierComparePoint(iterator)];
 
@@ -201,6 +268,17 @@ function processKeepDropSpecificList(iterator, diceRoll, isKeep) {
 	return new ParserObjects.KeepDropConditional(diceRoll, conditions, isKeep);
 }
 
+/**
+ * Attempts to read a resolver from the iterator and wrap the target ParserObject in it.
+ * Resolvers modify lists of dice or numbers into a single number, usually via a method
+ * other than the summation method used by default. This is a no-op if no resolver
+ * is found.
+ * Examples: 'm', 'mt', '>4', '>5f1'
+ * @param {DiceStringIterator} iterator An iterator at the start of a resolver.
+ * @param {ParserObject} targetObject The ParserObject to wrap if a resolver is discovered.
+ * @returns Either the input ParserObject or a resolver ParserObject wrapping the input
+ * Parser Object.
+ */
 function processListResolver(iterator, targetObject) {
 	let currentChar = iterator.peek();
 	if (currentChar.done) {

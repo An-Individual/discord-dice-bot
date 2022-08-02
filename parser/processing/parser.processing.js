@@ -7,10 +7,27 @@ const { Brackets } = require('../carving/parser.carving');
 const { processInt, processFloat } = require('./parser.processing.numbers');
 const { processDice, processListResolver, processKeepDropModifier } = require('./parser.processing.dice');
 
+/**
+ * Root method of the processing step. Primarily here to flag
+ * the root method to readers and external systems since the
+ * actual core method is recurrsive.
+ * @param {*} object Root object output by the carving and folding step.
+ * @returns A hierarchy of ProcessorObjects that can be resolved
+ * to execute the input dice string.
+ */
 function processCarvedHierarchy(object) {
 	return processGeneral(object);
 }
 
+/**
+ * Core method in the processing recursion loop. If a method
+ * isn't sure what one of it's children is it calls this.
+ * @param {*} object Either a string representing a number or
+ * dice roll, a MathFunction, or Brackets wrapper.
+ * @returns A hierarchy of ProcessorObjects that can be resolved to execute
+ * the parts of the dice roll that appear at or below this point in the
+ * carved and folded hierarhcy.
+ */
 function processGeneral(object) {
 	if (object instanceof Brackets) {
 		return processBrackets(object);
@@ -26,6 +43,14 @@ function processGeneral(object) {
 	}
 }
 
+/**
+ * Handles insteances of Brackets in the carved/folded hierarchy.
+ * Brackets objects can represent functions, number lists, or might
+ * just be wrappers around other heirarchy objects.
+ * @param {Brackets} brackets A Brackets object from the carved/folded hierarchy.
+ * @returns A ProcessingObject that can be resolved to execute this
+ * object and its children.
+ */
 function processBrackets(brackets) {
 	const entries = brackets.elements.map(e => processGeneral(e));
 
@@ -59,6 +84,16 @@ function processBrackets(brackets) {
 	return new ParserObjects.Bracket(entries[0]);
 }
 
+/**
+ * A helper method of processBrackets() that handles the modifier suffix.
+ * The suffix can be success/fail or match resolves or keep.drop modifiers.
+ * If the text contains more than 1 modifier, or other superfluous text,
+ * this method throws an error.
+ * @param {*} object The ParserObject to wrap if a modifier is present.
+ * @param {*} modifierSuffix The suffix string of the Brackets object.
+ * @returns Either the input ParserObject or a ParserObject wrapping it
+ * that applies the modifier from the suffix.
+ */
 function processBracketsModifiers(object, modifierSuffix) {
 	const iterator = new DiceStringIterator(modifierSuffix);
 	const current = iterator.peek();
@@ -81,6 +116,13 @@ function processBracketsModifiers(object, modifierSuffix) {
 	throw new Error(`Unknown bracket modifiers "${modifierSuffix}"`);
 }
 
+/**
+ * Processes the two halves of a math function and combines them
+ * into the appropriate parser object.
+ * @param {MathFunction} mathFunc MathFunction object from the carved/folded hierarchy.
+ * @returns A ParserObject that performs the appropariate operation between the left
+ * and right halves of the input's carved/folded hierarhcy.
+ */
 function processMathFunction(mathFunc) {
 	const left = processGeneral(mathFunc.left);
 	const right = processGeneral(mathFunc.right);
@@ -103,6 +145,14 @@ function processMathFunction(mathFunc) {
 	}
 }
 
+/**
+ * Handles the case where processGeneral() is looking at text.
+ * The text could represent an integer. A float. Or a dice roll
+ * with a list of modifiers and up to 1 resolver.
+ * @param {*} text The text from the carve/fold hierarchy to parse.
+ * @returns A ProcessorObject that resolves to either a number or
+ * dice roll depending on the input text.
+ */
 function processNumberOrDice(text) {
 	const iterator = new DiceStringIterator(text);
 	let current = iterator.peek();
@@ -114,6 +164,7 @@ function processNumberOrDice(text) {
 		current = iterator.peek();
 	}
 	else {
+		// Dice strings without a leading number always roll 1 die.
 		num = 1;
 	}
 
