@@ -1,5 +1,16 @@
 const { MathFunction } = require('./parser.carving.math');
 
+/**
+ * Takes an array of bracket objects, strings, and math functions
+ * and causes math functions to use their empty slots from the
+ * earlier carving and folding step to consume their neighbors.
+ * If all is going correctly, this will return a single entry
+ * list that is either a string, Bracket, or MathFunction.
+ * @param {*} elements An array of bracket objects, strings, and
+ * math functions.
+ * @returns A new array after the the math functions have consumed
+ * their neighbors.
+ */
 function foldAdjacentObjectsIntoMathFuncs(elements) {
 	const result = [];
 
@@ -45,6 +56,13 @@ function foldAdjacentObjectsIntoMathFuncs(elements) {
 	return result;
 }
 
+/**
+ * Helper method for foldAdjacentObjectsIntoMathFuncs().
+ * Finds the left most MathFunction in the given MathFunction
+ * hierarchy that has an empty left slot.
+ * @param {MathFunction} func The root of the function hierarchy to search.
+ * @returns A MathFunction with an empty left slot or undefined.
+ */
 function getMathFuncWithEmptyLeftSlot(func) {
 	if (func instanceof MathFunction && !func.left) {
 		return func;
@@ -67,6 +85,13 @@ function getMathFuncWithEmptyLeftSlot(func) {
 	return;
 }
 
+/**
+ * Helper method for foldAdjacentObjectsIntoMathFuncs().
+ * Finds the right most MathFunction in the given MathFunction
+ * hierarchy that has an empty right slot.
+ * @param {MathFunction} func The root of the function hierarchy to search.
+ * @returns A MathFunction with an empty right slot or undefined.
+ */
 function getMathFuncWithEmptyRightSlot(func) {
 	if (!func.right) {
 		return func;
