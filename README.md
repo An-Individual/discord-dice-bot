@@ -1,10 +1,10 @@
 # Discord Dice Bot
 
-_**Current State: New but functional. Basic use cases should all be stable but it hasn't spent much time in the wild. If you encounter a bug please file an issue containing the string that caused it and the resulting message.**_
+_**Current State: New but functional. I expect any issues to be fairly wild side cases, but it hasn't spent much time in general use yet. If you encounter a bug please file an issue containing the string that caused it and the resulting message.**_
 
-If you're here to read code, I must apologize in advance. This project is the jet lagged fever dream of someone only semi-familiar with Javascript more or less making it up as they go. Read at your peril.
+If you're here to read code, I must apologize in advance. I've now done a pass to clean up the code and add comments, but this project is still the jet lagged fever dream of someone only semi-familiar with Javascript. Read at your peril.
 
-If, however, you're just looking for a Discord bot that can roll some dice. Welcome! Dice Bot here is a chat bot that adds slash commands to your server that more or less mimic Roll20's dice rolling syntax. It runs on [Node.js](https://nodejs.org) using [Discord.js](https://discord.js.org). There's a public version of the bot you can DM by [clicking here](https://discord.com/channels/@me/1000836659190968361) or authorize by [clicking here](https://discord.com/api/oauth2/authorize?client_id=1000222866173866004&permissions=0&scope=bot). However, it's just running on free tier Heroku, so if you want to use it long term I recommend running a version of it yourself. Fortunately, with some modest technical knowledge that isn't too hard. It's a fairly powerful dice engine so you can do things like `/r input:(3+{2d6!<2-1,5d8r3r5>3,1d6^3}dl2)*2d6`.
+If, however, you're just looking for a Discord bot that can roll some dice. Welcome! Dice Bot here is a chat bot that adds slash commands to your server that more or less mimic Roll20's dice rolling syntax. It runs on [Node.js](https://nodejs.org) using [Discord.js](https://discord.js.org). There's a public version of the bot you can DM by [clicking here](https://discord.com/channels/@me/1000836659190968361) or authorize by [clicking here](https://discord.com/api/oauth2/authorize?client_id=1000222866173866004&permissions=0&scope=bot). However, it's just running on free tier Heroku, so if you want to use it long term I recommend grabbing a copy of the code base and running you're own version. Standing up a new version of the bot isn't too hard with some modest technical knowledge. It's a fairly powerful dice engine so you can do things like `/r input:(3+{2d6!<2-1,5d8r3r5>3,1d6^3}dl2)*2d6`.
 
 ![/gr input:(3+{2d6!<2-1,5d8r3r5>3,1d6^3}dl2)*2d6
 Result: 16
@@ -109,7 +109,7 @@ Regardless of whether you're grouping dice or making a list, here are the action
 
 ## Running the Bot
 
-**Disclaimer:** I'm going to write this assuming some baseline technical knowledge. If you aren't familiar with Git or Node.js I recommend looking up some beginner tutorials first. I'm not a native Node.js developer and thus a poor person to teach such things.
+**Disclaimer:** I'm going to write this assuming some baseline technical knowledge. If you aren't familiar with Git or run into trouble with Node.js I recommend looking up some beginner tutorials first. I'm not a native Node.js developer and thus a poor person to teach such things.
 
 The broad steps for running the bot, once you have a copy of the code base, are as follows. Commands must be run from the directory containing the bot's files.
 
@@ -117,14 +117,14 @@ The broad steps for running the bot, once you have a copy of the code base, are 
 
 2) Install [Node.js](https://nodejs.org) version 16.16.0 or newer. Only 16.9.0 should be required but 16.16.0 is the one I've tested.
 
-3) Install the bot's dependencies using `npm install`. this will install [Discord.js](https://discord.js.org), [ESLint](https://eslint.org/), and [Sinon.js](https://sinonjs.org/). If you want to run the tests you'll need to install [Mocha](https://mochajs.org/) yourself.
+3) Install the bot's dependencies by running `npm install` in a command prompt pointed at the director you downloaded this codebase to. This will install [Discord.js](https://discord.js.org), [ESLint](https://eslint.org/), and [Sinon.js](https://sinonjs.org/). If you want to run the tests you'll need to install [Mocha](https://mochajs.org/) yourself.
 
 4) Create a copy of the `config-template.json` file named `config.json` and replace `<application-token>` with your application's token and `<application-id>` with your application's ID.
 
-5) Register the bot's commands using `npm run deploy-commands`. You only need to run this once to register the bot's commands with Discord. After that, you can start and stop the bot without repeating this step.
+5) Register the bot's commands by running `npm run deploy-commands` in the same command prompt you used to install the dependencies. You only need to run this once to register the bot's commands with Discord. After that, you can start and stop the bot without repeating this step.
 
-6) Run the bot itself using `npm run start`. The bot will print "Ready!" in the command prompt at which point, if all has gone well, it will appear online in Discord and will respond to commands.
+6) Run the bot itself by running `npm run start` in the command prompt. The bot will print "Ready!" in the command prompt at which point, if all has gone well, it will appear online in Discord and will respond to commands.
 
-If you installed Mocha in step 3 you can run the tests using `npm run test`.
+If you installed Mocha in step 3 you can run the tests running `npm run test` instead of `npm run start`.
 
 Once you have the bot running you can keep it on your own machine, starting and stopping it as needed, or deploy it to a service like Heroku. Unfortunately, if I am a poor person to learn Node.js from I'm an even worse person to learn Heroku from. I've included the `Procfile` I used to deploy it, but recommend seeking out other sources for how to use it. The important bit is that it needs to run as a worker, not a web application, or it will crash shortly after startup. Depending on how you deploy it you may also need to remove the `.gitignore` file as this filters out important files like the `config.json` file.
