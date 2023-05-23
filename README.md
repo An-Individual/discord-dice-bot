@@ -36,6 +36,8 @@ Dice Bot adds two categories of dice rolling slash commands to a server. Quick c
 
 * `/d1000` rolls a 1000 sided die.
 
+* `/gofirst` rolls the four twelve sided [go first dice](https://en.wikipedia.org/wiki/Go_First_Dice).
+
 And the roll commands are.
 
 * `/r` and `/roll` take a dice string and prints the result in a public message everyone on the channel can see.

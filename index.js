@@ -32,12 +32,20 @@ const quickCommands = {
 
 // Handle slash commands
 client.on('interactionCreate', async interaction => {
-	if (!interaction.isCommand() ||
-		(!quickCommands[interaction.commandName] &&
-			interaction.commandName !== 'r' &&
-			interaction.commandName !== 'roll' &&
-			interaction.commandName !== 'gr' &&
-			interaction.commandName !== 'gmroll')) return;
+	if (!interaction.isCommand()) {
+		return;
+	}
+
+	if (interaction.commandName === 'gofirst') {
+		handleGoFirstRoll(interaction);
+		return;
+	}
+
+	if (!quickCommands[interaction.commandName] &&
+		interaction.commandName !== 'r' &&
+		interaction.commandName !== 'roll' &&
+		interaction.commandName !== 'gr' &&
+		interaction.commandName !== 'gmroll') return;
 
 	const gmRoll = interaction.commandName.startsWith('g');
 
@@ -167,6 +175,38 @@ class DiscordFormatter extends BaseFormatter {
 
 		return `*${text}*`;
 	}
+}
+
+const goFirstD1 = [1, 8, 11, 14, 19, 22, 27, 30, 35, 38, 41, 48];
+const goFirstD2 = [2, 7, 10, 15, 18, 23, 26, 31, 34, 39, 42, 47];
+const goFirstD3 = [3, 6, 12, 13, 17, 24, 25, 32, 36, 37, 43, 46];
+const goFirstD4 = [4, 5, 9, 16, 20, 21, 28, 29, 33, 40, 44, 45];
+
+async function handleGoFirstRoll(interaction) {
+	const p1Roll = goFirstD1[Math.floor(Math.random() * 12)];
+	const p2Roll = goFirstD2[Math.floor(Math.random() * 12)];
+	const p3Roll = goFirstD3[Math.floor(Math.random() * 12)];
+	const p4Roll = goFirstD4[Math.floor(Math.random() * 12)];
+
+	const lines = [`Player 1: [${p1Roll}]`, `Player 2: [${p2Roll}]`, `Player 3: [${p3Roll}]`, `Player 4: [${p4Roll}]`];
+
+	const bestRoll = `[${Math.max(p1Roll, p2Roll, p3Roll, p4Roll)}]`;
+
+	let result = '';
+	for (let i = 0; i < lines.length; i++) {
+		if (result) {
+			result += '\n';
+		}
+
+		if (lines[i].endsWith(bestRoll)) {
+			result += `**${lines[i]}**`;
+		}
+		else {
+			result += lines[i];
+		}
+	}
+
+	await interaction.reply({ content: result });
 }
 
 // Login to Discord with your client's token

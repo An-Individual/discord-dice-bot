@@ -27,6 +27,7 @@ const commands = [
 	new SlashCommandBuilder().setName('d20disadvantage').setDescription('Rolls two 20 sided dice and takes the lowest.'),
 	new SlashCommandBuilder().setName('d100').setDescription('Rolls two 20 sided dice and takes the lowest.'),
 	new SlashCommandBuilder().setName('d1000').setDescription('Rolls two 20 sided dice and takes the lowest.'),
+	new SlashCommandBuilder().setName('gofirst').setDescription('Rolls four 12 sided go first dice.'),
 ]
 	.map(command => command.toJSON());
 
