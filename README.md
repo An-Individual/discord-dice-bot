@@ -12,12 +12,36 @@ Result: 16
 
 ## Syntax
 
-Dice Bot adds the following slash commands to a server.
+Dice Bot adds two categories of dice rolling slash commands to a server. Quick commands and roll commands. The quick commands are:
+
+* `/d4` rolls a 4 sided die.
+
+* `/d6` rolls a 6 sided die.
+
+* `/2d6` rolls two 6 sided dice.
+
+* `/d8` rolls an eight sided die.
+
+* `/d10` rolls a 10 sided die.
+
+* `/d12` rolls a 12 sided die.
+
+* `/d20` rolls a 20 sided die.
+
+* `/d20a` and `/d20advantage` rolls two 20 sided dice and takes the highest.
+
+* `/d20d` and `/d20disadvantage` rolls two 20 sided dice and takes the lowest.
+
+* `/d100` rolls a 100 sided die.
+
+* `/d1000` rolls a 1000 sided die.
+
+And the roll commands are.
 
 * `/r` and `/roll` take a dice string and prints the result in a public message everyone on the channel can see.
 * `/gr` and `/gmroll` take a dice string and respond with an ephemeral message only you can see.
 
-All of these commands require an `input:` option that contains the dice string (eg. `/r input:1d20`). In most cases Discord's interface will add this automatically since it's a required part of the command.
+The roll commands require an `input:` option that contains the dice string (eg. `/r input:1d20`). In most cases Discord's interface will add this automatically since it's a required part of the command.
 
 If you're familiar with [Roll20 syntax](https://wiki.roll20.net/Dice_Reference) the main differences you'll want to watch for are that `d` and `k` are not equivalent to `dl` and `kh`. They are their own modifiers used to drop or keep specific dice numbers. `[` and `]` brackets in the rolls are not recognized and will cause errors. Exponents are denoted with `^` instead of `**`. `{3d20+3}>21` will simply total `3d20+3` and tell you if the result is greater than `21`. `{2d6+2d8}>4` will behave how you expect, but there isn't any special handling in the `{3d20+3}` case to keep summing of the dice with an integer from returning a single number instead of a set of dice. The `cs` modifier isn't supported. And finally, you cannot compute dice so things like `(1+2)d6` or `3d(4+6)` will fail.
 

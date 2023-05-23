@@ -14,22 +14,48 @@ client.once('ready', () => {
 // Handle errors
 client.on('error', console.error);
 
+const quickCommands = {
+	'd4': 'd4',
+	'd6': 'd6',
+	'2d6': '2d6',
+	'd8': 'd8',
+	'd10': 'd10',
+	'd12': 'd12',
+	'd20': 'd20',
+	'd20a': '2d20kh',
+	'd20advantage': '2d20kh',
+	'd20d': '2d20kl',
+	'd20disadvantage': '2d20kl',
+	'd100': 'd100',
+	'd1000': 'd1000',
+};
+
 // Handle slash commands
 client.on('interactionCreate', async interaction => {
 	if (!interaction.isCommand() ||
-		(interaction.commandName !== 'r' &&
+		(!quickCommands[interaction.commandName] &&
+			interaction.commandName !== 'r' &&
 			interaction.commandName !== 'roll' &&
 			interaction.commandName !== 'gr' &&
 			interaction.commandName !== 'gmroll')) return;
 
 	const gmRoll = interaction.commandName.startsWith('g');
 
-	let input = interaction.options.getString('input');
+	let input = quickCommands[interaction.commandName];
+	if (!input) {
+		input = interaction.options.getString('input');
+	}
+
 	const result = processStringAndCreateResponse(input);
 
 	input = standardizeDiceString(input);
 
-	let response = `> \`/${interaction.commandName} input:${input}\`\n${result}`;
+	const publicCommand =
+		interaction.commandName.startsWith('r') || interaction.commandName.startsWith('g') ?
+			interaction.commandName :
+			'r';
+
+	let response = `> \`/${publicCommand} input:${input}\`\n${result}`;
 	response = enforceMessageLengthLimit(response);
 
 	await interaction.reply({ content: response, ephemeral: gmRoll });
